@@ -151,3 +151,72 @@ sample_prev <- function(df_sim, df_sample) {
 get_logistic <- function(s, p0, t) {
   1 / (1 + (1 - p0)/p0*exp(-s*t))
 }
+
+#------------------------------------------------
+# estimates parameters (selection coefficient and initial prevalence) using
+# maximum likelihood. Calculate 95% CI on selection coefficient using profile
+# likelihood. Allows for multiple populations.
+estimate_ML <- function() {
+
+}
+
+#------------------------------------------------
+# runs drjacoby MCMC to estimate s and sigma. Returns full MCMC results. Allows
+# for multiple populations.
+run_mcmc <- function() {
+
+}
+
+#------------------------------------------------
+# reads in MCMC results and returns 95% credible intervals on s, marginalized
+# over sigma.
+estimate_Bayesian <- function() {
+
+}
+
+#------------------------------------------------
+# runs forward-backward algorithm to calculate posterior prevalence at all
+# times. Allows for multiple populations. Can take in scalar values of s and
+# sigma, or vectors drawn from the posterior in which case marginalizes over all
+# values.
+get_posterior_prev <- function() {
+
+}
+
+#------------------------------------------------
+# converts posterior prevalence estimates to quantiles ready for plotting.
+get_posterior_quantiles <- function() {
+
+}
+
+#------------------------------------------------
+# similar to get_posterior_prev(), but returns trajectories rather than
+# posterior probabilities. As with get_posterior_prev(), can accommodate vectors
+# of model parameters drawn from the posterior.
+get_posterior_trajectory <- function() {
+
+}
+
+#------------------------------------------------
+# plots various optional elements in the following order:
+# 1. posterior prevalence quantiles
+# 2. trajectories
+# 3. data CIs
+plot_prev <- function() {
+
+}
+
+#------------------------------------------------
+# calculates expected margin of error based on posterior prevalence. Returns MOE
+# such that we have 80% chance of being equal or less than this range. Can
+# accommodate multiple time points, in which case treats as independent.
+get_MOE <- function() {
+
+}
+
+#------------------------------------------------
+# calculates sample size required to have 80% chance of being within a given
+# MOE. As with get_MOE(), can accommodate multiple time points.
+get_sample_size <- function() {
+
+}

@@ -7,12 +7,16 @@
 get_logistic(s, p0, t)
 }
 \arguments{
-\item{s}{TODO.}
+\item{s}{Selection coefficient. A positive value favors the allele, negative values represent deleterious effects.}
 
-\item{p0}{TODO.}
+\item{p0}{Initial allele frequency (between 0 and 1).}
 
-\item{t}{TODO.}
+\item{t}{A numeric vector of time points (generations) at which to evaluate the trajectory.}
+}
+\value{
+A numeric vector of allele frequencies at each time point.
 }
 \description{
-TODO
+Computes the deterministic logistic trajectory of allele frequency over time under selection,
+assuming no genetic drift. This models the expected change in allele frequency due to selection alone.
 }

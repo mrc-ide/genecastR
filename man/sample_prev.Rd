@@ -4,13 +4,28 @@
 \alias{sample_prev}
 \title{Sample from a simulated prevalence trajectory}
 \usage{
-sample_prev(df_sim, df_sample)
+sample_prev(df_sim, df_data)
 }
 \arguments{
-\item{df_sim}{TODO.}
+\item{df_sim}{A data frame of simulated allele frequency trajectories, typically from \code{sim_WF()} or \code{sim_diffusion()}.
+Must include columns \code{pop}, \code{t}, and \code{p} (true frequency).}
 
-\item{df_sample}{TODO.}
+\item{df_data}{A data frame specifying sampling points, with columns \code{pop}, \code{t}, and \code{n_samp} (number of individuals sampled per population and time point).}
+}
+\value{
+A data frame with the following columns:
+\describe{
+  \item{pop}{Population ID.}
+  \item{t}{Generation (time point).}
+  \item{p}{True simulated allele frequency.}
+  \item{n_samp}{Number of individuals sampled at that time point.}
+  \item{n_pos}{Number of positive (allele-carrying) individuals sampled (binomial draw).}
+  \item{p_est}{Estimated allele frequency (sample proportion).}
+  \item{CI_lower}{Lower bound of 95\% confidence interval for prevalence.}
+  \item{CI_upper}{Upper bound of 95\% confidence interval for prevalence.}
+}
 }
 \description{
-TODO
+Samples observed allele prevalence from a simulated trajectory by drawing from a binomial distribution,
+and computes 95% confidence intervals for the estimated prevalence at each sampling point.
 }

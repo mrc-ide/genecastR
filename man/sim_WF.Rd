@@ -4,19 +4,28 @@
 \alias{sim_WF}
 \title{Simulate from a Wright-Fisher model}
 \usage{
-sim_WF(s, p0, N, t_max, n_deme)
+sim_WF(s, p0, N, t_max, n_pop)
 }
 \arguments{
-\item{s}{TODO.}
+\item{s}{Selection coefficient. A positive value favors the allele, negative values represent deleterious effects.}
 
-\item{p0}{TODO.}
+\item{p0}{Initial allele frequency (between 0 and 1).}
 
-\item{N}{TODO.}
+\item{N}{Effective population size (number of diploid individuals).}
 
-\item{t_max}{TODO.}
+\item{t_max}{Number of generations to simulate.}
 
-\item{n_deme}{TODO.}
+\item{n_pop}{Number of independent populations (replicates) to simulate.}
+}
+\value{
+A data frame with columns:
+\describe{
+  \item{pop}{Population (replicate) ID, from 1 to \code{n_pop}.}
+  \item{t}{Generation number, from 1 to \code{t_max}.}
+  \item{p}{Allele frequency in that population and generation.}
+}
 }
 \description{
-Simulates from Wright-Fisher model with drift and selection.
+Simulates allele frequency trajectories over time using the Wright-Fisher model with selection and genetic drift.
+Each trajectory represents a population evolving independently under the same parameters.
 }

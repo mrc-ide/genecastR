@@ -4,21 +4,30 @@
 \alias{sim_diffusion}
 \title{Simulate from a diffusion approximation to the Wright-Fisher model}
 \usage{
-sim_diffusion(s, p0, sigma, dx = 0.01, t_max, n_deme)
+sim_diffusion(s, p0, sigma, dx = 0.01, t_max, n_pop)
 }
 \arguments{
-\item{s}{TODO.}
+\item{s}{Selection coefficient. A positive value favors the allele, negative values represent deleterious effects.}
 
-\item{p0}{TODO.}
+\item{p0}{Initial allele frequency (between 0 and 1).}
 
-\item{sigma}{TODO.}
+\item{sigma}{Diffusion standard deviation. Controls the strength of genetic drift.}
 
-\item{dx}{TODO.}
+\item{dx}{Discretization step size for the allele frequency space (default is 0.01).}
 
-\item{t_max}{TODO.}
+\item{t_max}{Number of generations to simulate.}
 
-\item{n_deme}{TODO.}
+\item{n_pop}{Number of independent populations (replicates) to simulate.}
+}
+\value{
+A data frame with columns:
+\describe{
+  \item{pop}{Population (replicate) ID, from 1 to \code{n_deme}.}
+  \item{t}{Generation number, from 1 to \code{t_max}.}
+  \item{p}{Allele frequency (discretized), between 0 and 1.}
+}
 }
 \description{
-Simulates from diffusion approximation to Wright-Fisher model.
+Simulates allele frequency trajectories using a diffusion approximation to the Wright-Fisher model,
+incorporating selection and drift. Allele frequencies evolve as a discrete approximation to a continuous diffusion process.
 }

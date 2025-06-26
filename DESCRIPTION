@@ -1,12 +1,14 @@
 Package: genecastR
 Type: Package
-Title: Estimates allele prevalence under selection using longitudinal genetic data
+Title: Estimate allele frequency trajectories under selection from time series data
 Version: 0.1.0
 Authors@R: c(
     person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre"))
     )
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: A package for estimating the strength of selection from allele prevalence 
+    data observed over time. Uses a hidden Markov model and Bayesian MCMC to infer and 
+    predict allele frequency trajectories under genetic drift. Also includes tools to 
+    support study design, such as sample size and power calculations.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

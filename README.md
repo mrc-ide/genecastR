@@ -5,7 +5,8 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/mrc-ide/genecastR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/mrc-ide/genecastR/actions/workflows/R-CMD-check.yaml)
+[![develop](https://github.com/mrc-ide/genecastR/actions/workflows/checks_develop.yaml/badge.svg)](https://github.com/mrc-ide/genecastR/actions/workflows/checks_develop.yaml)
+[![main](https://github.com/mrc-ide/genecastR/actions/workflows/checks_develop.yaml/badge.svg)](https://github.com/mrc-ide/genecastR/actions/workflows/checks_main.yaml)
 <!-- badges: end -->
 
 The goal of genecastR is to …

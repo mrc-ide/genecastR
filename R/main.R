@@ -589,6 +589,11 @@ get_posterior_prev <- function(df_data,
   # loop over pops
   df_post <- mapply(function(df) {
 
+    pb <- progress_bar$new(
+      format = "  computing [:bar] :percent eta: :eta",
+      total = length(s), clear = FALSE, width = 60
+    )
+
     # run forward-backward algorithm for each value of model parameters
     post_mat <- 0
     for (i in seq_along(s)) {
@@ -608,12 +613,14 @@ get_posterior_prev <- function(df_data,
                                        t_max = t_max)
       tmp <- forward_mat*backward_mat
       post_mat <- post_mat + tmp / rowSums(tmp)
+
+      pb$tick()
     }
     post_mat <- post_mat / rowSums(post_mat)
 
     # format
     expand_grid(pop = df$pop[1],
-                p = x,
+                p = seq(0, 1, dx),
                 t = t_min:t_max) |>
       mutate(post = as.vector(post_mat))
   }, group_split(df_data, pop), SIMPLIFY = FALSE) |>

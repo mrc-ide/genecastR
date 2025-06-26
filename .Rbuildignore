@@ -4,3 +4,4 @@ ignore/
 R_ignore/
 ^README\.Rmd$
 LICENSE.md
+^\.github$

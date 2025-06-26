@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 
+[![develop](https://github.com/mrc-ide/genecastR/actions/workflows/checks_develop.yaml/badge.svg)](https://github.com/mrc-ide/genecastR/actions/workflows/checks_develop.yaml)
+[![main](https://github.com/mrc-ide/genecastR/actions/workflows/checks_develop.yaml/badge.svg)](https://github.com/mrc-ide/genecastR/actions/workflows/checks_main.yaml)
 <!-- badges: end -->
 
 The goal of genecastR is to …

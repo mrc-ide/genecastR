@@ -4,16 +4,16 @@
 \alias{sim_WF}
 \title{Simulate from a Wright-Fisher model}
 \usage{
-sim_WF(s, p0, N, t_max, n_pop)
+sim_WF(s, p0, N, week_max, n_pop)
 }
 \arguments{
-\item{s}{Selection coefficient. A positive value favors the allele, negative values represent deleterious effects.}
+\item{s}{Selection coefficient. A positive value favours the allele, negative values represent deleterious effects.}
 
 \item{p0}{Initial allele frequency (between 0 and 1).}
 
 \item{N}{Effective population size (number of diploid individuals).}
 
-\item{t_max}{Number of generations to simulate.}
+\item{week_max}{Number of generations to simulate, where a week is a single generation (valid under a scaled effective population size).}
 
 \item{n_pop}{Number of independent populations (replicates) to simulate.}
 }
@@ -21,7 +21,7 @@ sim_WF(s, p0, N, t_max, n_pop)
 A data frame with columns:
 \describe{
   \item{pop}{Population (replicate) ID, from 1 to \code{n_pop}.}
-  \item{t}{Generation number, from 1 to \code{t_max}.}
+  \item{week}{Week number, from 1 to \code{max_weeks}.}
   \item{p}{Allele frequency in that population and generation.}
 }
 }

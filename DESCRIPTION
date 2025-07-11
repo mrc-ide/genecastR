@@ -1,7 +1,7 @@
 Package: genecastR
 Type: Package
 Title: Estimate allele frequency trajectories under selection from time series data
-Version: 0.1.0
+Version: 1.0.0
 Authors@R: c(
     person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre"))
     )
@@ -19,9 +19,12 @@ Imports:
     ggplot2,
     progress,
     tidyr,
-    drjacoby
+    drjacoby,
+    RColorBrewer
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Remotes:
-    mrc-ide/drjacoby
+    mrc-ide/drjacoby@v1.5.4
+Depends: 
+    R (>= 2.10)

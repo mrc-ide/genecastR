@@ -8,7 +8,7 @@ estimate_ML(df_data, s_range = c(-0.1, 0.1))
 }
 \arguments{
 \item{df_data}{A data frame with observed prevalence data. Must include columns:
-\code{pop} (population ID), \code{t} (generation), \code{n_samp} (sample size), and
+\code{pop} (population ID), \code{week} (sampling week), \code{n_samp} (sample size), and
 \code{n_pos} (number of individuals carrying the allele).}
 
 \item{s_range}{A numeric vector of length 2 specifying the range of selection coefficients

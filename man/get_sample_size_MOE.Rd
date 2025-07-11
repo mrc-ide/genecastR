@@ -4,23 +4,35 @@
 \alias{get_sample_size_MOE}
 \title{Get minimum sample size based on margin of error}
 \usage{
-get_sample_size_MOE(pop, t_samp, MOE, n_max = 1000, df_post)
+get_sample_size_MOE(
+  pop,
+  week,
+  MOE,
+  n_min = 10,
+  n_max = 1000,
+  df_post,
+  CI_type = "CP"
+)
 }
 \arguments{
 \item{pop}{Population ID (integer or character) for which to calculate the required sample size.}
 
-\item{t_samp}{A single time point (generation) at which sampling is planned.}
+\item{week}{A single time point (week) at which sampling is planned.}
 
 \item{MOE}{Desired margin of error (half-width of the 95\% confidence interval).}
+
+\item{n_min}{Minimum sample size to search (default is \code{10}).}
 
 \item{n_max}{Maximum sample size to search (default is \code{1000}).}
 
 \item{df_post}{A data frame of posterior allele frequencies as returned by \code{\link{get_posterior_prev}}.
 Must include columns \code{pop}, \code{t}, \code{p}, and \code{post}.}
+
+\item{CI_type}{Which type of MOE to use (see \code{?get_MOE()}).}
 }
 \value{
 A named numeric vector with the minimum required sample size, or \code{NULL} if no sample size within
-the range \code{1} to \code{n_max} satisfies the target margin of error.
+the range \code{n_min} to \code{n_max} satisfies the target margin of error.
 }
 \description{
 Calculates the minimum sample size required to ensure at least an 80\% chance that the margin of error (MOE)

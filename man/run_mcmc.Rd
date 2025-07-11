@@ -7,13 +7,13 @@
 run_mcmc(
   df_data,
   dx = 0.01,
-  t_min = 1,
+  week_min = 1,
   burnin = 100,
   samples = 1000,
   chains = 1,
-  prior_s = function(s) dlnorm_reparam(s, mean = 0.01, sd = 0.01, return_log = TRUE),
-  prior_sigma = function(sigma) dlnorm_reparam(sigma, mean = 0.01, sd = 0.01, return_log
-    = TRUE),
+  prior_s = function(s) dlnorm_reparam(s, mean = 0.05, sd = 0.05, return_log = TRUE),
+  prior_sigma = function(sigma) dlnorm_reparam(sigma, mean = 0.1, sd = 0.2, return_log =
+    TRUE),
   s_init = 0.01,
   sigma_init = 0.01,
   x_init = seq(0, 1, dx),
@@ -27,7 +27,7 @@ run_mcmc(
 
 \item{dx}{Step size for discretizing allele frequencies (default is \code{0.01}).}
 
-\item{t_min}{The starting generation for likelihood calculation (default is \code{1}).}
+\item{week_min}{The starting week for likelihood calculation (default is \code{1}).}
 
 \item{burnin}{Number of burn-in iterations per chain (default is \code{1e2}).}
 

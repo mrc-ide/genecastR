@@ -4,10 +4,10 @@
 \alias{sim_diffusion}
 \title{Simulate from a diffusion approximation to the Wright-Fisher model}
 \usage{
-sim_diffusion(s, p0, sigma, dx = 0.01, t_max, n_pop)
+sim_diffusion(s, p0, sigma, dx = 0.01, week_max, n_pop)
 }
 \arguments{
-\item{s}{Selection coefficient. A positive value favors the allele, negative values represent deleterious effects.}
+\item{s}{Selection coefficient. A positive value favours the allele, negative values represent deleterious effects.}
 
 \item{p0}{Initial allele frequency (between 0 and 1).}
 
@@ -15,7 +15,7 @@ sim_diffusion(s, p0, sigma, dx = 0.01, t_max, n_pop)
 
 \item{dx}{Discretization step size for the allele frequency space (default is 0.01).}
 
-\item{t_max}{Number of generations to simulate.}
+\item{week_max}{Number of generations to simulate, where a week is a single generation (valid under a scaled effective population size).}
 
 \item{n_pop}{Number of independent populations (replicates) to simulate.}
 }
@@ -23,7 +23,7 @@ sim_diffusion(s, p0, sigma, dx = 0.01, t_max, n_pop)
 A data frame with columns:
 \describe{
   \item{pop}{Population (replicate) ID, from 1 to \code{n_deme}.}
-  \item{t}{Generation number, from 1 to \code{t_max}.}
+  \item{week}{Week number, from 1 to \code{max_weeks}.}
   \item{p}{Allele frequency (discretized), between 0 and 1.}
 }
 }

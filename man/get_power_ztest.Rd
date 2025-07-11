@@ -4,19 +4,19 @@
 \alias{get_power_ztest}
 \title{Get power under a z-test}
 \usage{
-get_power_ztest(pop, t_samp, n_samp, prev_thresh, df_post)
+get_power_ztest(pop, week, n_samp, prev_thresh = 0.05, df_post)
 }
 \arguments{
 \item{pop}{Population ID (integer or character) for which to compute power.}
 
-\item{t_samp}{A single time point (generation) at which sampling will occur.}
+\item{week}{A single time point (week) at which sampling will occur.}
 
 \item{n_samp}{A single scalar specifying the number of individuals to be sampled.}
 
 \item{prev_thresh}{Prevalence threshold to test against (null hypothesis: prevalence = \code{prev_thresh}).}
 
 \item{df_post}{A data frame of posterior allele frequencies as returned by \code{\link{get_posterior_prev}}.
-Must include columns \code{pop}, \code{t}, \code{p}, and \code{post}.}
+Must include columns \code{pop}, \code{week}, \code{p}, and \code{post}.}
 }
 \value{
 A data frame with a single value: the estimated power (probability of detecting a significant deviation
@@ -24,7 +24,5 @@ from \code{prev_thresh} under the posterior predictive distribution).
 }
 \description{
 Calculates the statistical power to detect whether allele prevalence exceeds a specified threshold
-using a one-sample z-test of proportions. Power is defined as the probability that a future sample
-would yield a statistically significant result (two-sided test at \code{alpha = 0.05}). The function
-accounts for uncertainty in the true prevalence using a posterior distribution over allele frequencies.
+using a one-sample z-test of proportions. The function accounts for uncertainty in the true prevalence using a posterior distribution over allele frequencies. Note that this assumes a one-sided test at \code{alpha = 0.05}, and returns the probability that we correctly conclude that prevalence is \emph{above} this threshold. For example, if there is a very low posterior probability that the prevalence is truly above the threshold then power will be low, not because sample size is insufficient, but because there is a low probability that the null hypothesis is false.
 }

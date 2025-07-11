@@ -33,7 +33,7 @@ You can install genecastR from [GitHub](https://github.com/) with:
 
 ```{r, eval=FALSE}
 # install.packages("devtools")
-devtools::install_github("mrc-ide/genecastR@v1.1.0")
+devtools::install_github("mrc-ide/genecastR@v1.0.0")
 
 library(genecastR)
 ```

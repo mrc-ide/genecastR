@@ -9,8 +9,8 @@ get_posterior_prev(
   s,
   sigma,
   dx = 0.01,
-  t_min = 1,
-  t_max = 365,
+  week_min = 1,
+  week_max = 52,
   x_init = seq(0, 1, dx)
 )
 }
@@ -24,9 +24,9 @@ get_posterior_prev(
 
 \item{dx}{Step size for discretizing allele frequencies (default is \code{0.01}).}
 
-\item{t_min}{The first generation to include in the trajectory (default is \code{1}).}
+\item{week_min}{The first week to include in the trajectory (default is \code{1}).}
 
-\item{t_max}{The last generation to include in the trajectory (default is \code{365}).}
+\item{week_max}{The last week to include in the trajectory (default is \code{52}).}
 
 \item{x_init}{A vector specifying the initial allele frequency distribution (default is \code{seq(0, 1, dx)}).}
 }
@@ -35,7 +35,7 @@ A data frame with columns:
 \describe{
   \item{pop}{Population ID.}
   \item{p}{Allele frequency bin (from \code{x_init}).}
-  \item{t}{Generation (time point).}
+  \item{week}{Time in weeks.}
   \item{post}{Posterior probability of allele frequency \code{p} at time \code{t}.}
 }
 }

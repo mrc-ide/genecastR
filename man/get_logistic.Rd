@@ -4,14 +4,14 @@
 \alias{get_logistic}
 \title{Logistic function}
 \usage{
-get_logistic(s, p0, t)
+get_logistic(s, p0, week)
 }
 \arguments{
-\item{s}{Selection coefficient. A positive value favors the allele, negative values represent deleterious effects.}
+\item{s}{Selection coefficient. A positive value favours the allele, negative values represent deleterious effects.}
 
 \item{p0}{Initial allele frequency (between 0 and 1).}
 
-\item{t}{A numeric vector of time points (generations) at which to evaluate the trajectory.}
+\item{week}{A numeric vector of time points (weeks) at which to evaluate the trajectory.}
 }
 \value{
 A numeric vector of allele frequencies at each time point.

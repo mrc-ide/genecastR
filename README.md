@@ -7,9 +7,9 @@
 [![main](https://github.com/mrc-ide/genecastR/actions/workflows/checks_develop.yaml/badge.svg)](https://github.com/mrc-ide/genecastR/actions/workflows/checks_main.yaml)
 <!-- badges: end -->
 
-# genecastR
+# **genecastR**
 
-genecastR is an R package for modelling changes in allele prevalence
+**genecastR** is an R package for modelling changes in allele prevalence
 over time using genetic surveillance data. It estimates the strength of
 selection acting on an allele while accounting for stochastic variation
 due to genetic drift, and it provides tools to forecast future
@@ -19,15 +19,15 @@ The package is designed for use in infectious disease
 applications—particularly malaria—where the prevalence of resistance
 alleles in *Plasmodium* parasites may change over time and space.
 However, the approach is broadly applicable to other systems with
-time-series allele frequency data.
+time-series frequency data.
 
 ## Installation
 
-You can install genecastR from [GitHub](https://github.com/) with:
+You can install **genecastR** from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("mrc-ide/genecastR@v1.0.0")
+devtools::install_github("mrc-ide/genecastR@v1.0.1")
 
 library(genecastR)
 ```
@@ -57,6 +57,10 @@ You can visualize the prevalence data using `plot_prev()`:
 
 ``` r
 library(ggplot2) # needed if we want to modify the plotting object
+#> Warning: package 'ggplot2' was built under R version 4.4.1
+```
+
+``` r
 
 # plot data over a 2-year window
 plot_prev(df_data = example_data) +
@@ -90,8 +94,8 @@ mcmc <- run_mcmc(df_data = example_data,
 #> sampling phase
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=                                                                     |   1%  |                                                                              |=                                                                     |   2%  |                                                                              |==                                                                    |   3%  |                                                                              |===                                                                   |   4%  |                                                                              |====                                                                  |   5%  |                                                                              |====                                                                  |   6%  |                                                                              |=====                                                                 |   7%  |                                                                              |======                                                                |   8%  |                                                                              |======                                                                |   9%  |                                                                              |=======                                                               |  10%  |                                                                              |========                                                              |  11%  |                                                                              |========                                                              |  12%  |                                                                              |=========                                                             |  13%  |                                                                              |==========                                                            |  14%  |                                                                              |===========                                                           |  15%  |                                                                              |===========                                                           |  16%  |                                                                              |============                                                          |  17%  |                                                                              |=============                                                         |  18%  |                                                                              |=============                                                         |  19%  |                                                                              |==============                                                        |  20%  |                                                                              |===============                                                       |  21%  |                                                                              |===============                                                       |  22%  |                                                                              |================                                                      |  23%  |                                                                              |=================                                                     |  24%  |                                                                              |==================                                                    |  25%  |                                                                              |==================                                                    |  26%  |                                                                              |===================                                                   |  27%  |                                                                              |====================                                                  |  28%  |                                                                              |====================                                                  |  29%  |                                                                              |=====================                                                 |  30%  |                                                                              |======================                                                |  31%  |                                                                              |======================                                                |  32%  |                                                                              |=======================                                               |  33%  |                                                                              |========================                                              |  34%  |                                                                              |=========================                                             |  35%  |                                                                              |=========================                                             |  36%  |                                                                              |==========================                                            |  37%  |                                                                              |===========================                                           |  38%  |                                                                              |===========================                                           |  39%  |                                                                              |============================                                          |  40%  |                                                                              |=============================                                         |  41%  |                                                                              |=============================                                         |  42%  |                                                                              |==============================                                        |  43%  |                                                                              |===============================                                       |  44%  |                                                                              |================================                                      |  45%  |                                                                              |================================                                      |  46%  |                                                                              |=================================                                     |  47%  |                                                                              |==================================                                    |  48%  |                                                                              |==================================                                    |  49%  |                                                                              |===================================                                   |  50%  |                                                                              |====================================                                  |  51%  |                                                                              |====================================                                  |  52%  |                                                                              |=====================================                                 |  53%  |                                                                              |======================================                                |  54%  |                                                                              |=======================================                               |  55%  |                                                                              |=======================================                               |  56%  |                                                                              |========================================                              |  57%  |                                                                              |=========================================                             |  58%  |                                                                              |=========================================                             |  59%  |                                                                              |==========================================                            |  60%  |                                                                              |===========================================                           |  61%  |                                                                              |===========================================                           |  62%  |                                                                              |============================================                          |  63%  |                                                                              |=============================================                         |  64%  |                                                                              |==============================================                        |  65%  |                                                                              |==============================================                        |  66%  |                                                                              |===============================================                       |  67%  |                                                                              |================================================                      |  68%  |                                                                              |================================================                      |  69%  |                                                                              |=================================================                     |  70%  |                                                                              |==================================================                    |  71%  |                                                                              |==================================================                    |  72%  |                                                                              |===================================================                   |  73%  |                                                                              |====================================================                  |  74%  |                                                                              |=====================================================                 |  75%  |                                                                              |=====================================================                 |  76%  |                                                                              |======================================================                |  77%  |                                                                              |=======================================================               |  78%  |                                                                              |=======================================================               |  79%  |                                                                              |========================================================              |  80%  |                                                                              |=========================================================             |  81%  |                                                                              |=========================================================             |  82%  |                                                                              |==========================================================            |  83%  |                                                                              |===========================================================           |  84%  |                                                                              |============================================================          |  85%  |                                                                              |============================================================          |  86%  |                                                                              |=============================================================         |  87%  |                                                                              |==============================================================        |  88%  |                                                                              |==============================================================        |  89%  |                                                                              |===============================================================       |  90%  |                                                                              |================================================================      |  91%  |                                                                              |================================================================      |  92%  |                                                                              |=================================================================     |  93%  |                                                                              |==================================================================    |  94%  |                                                                              |===================================================================   |  95%  |                                                                              |===================================================================   |  96%  |                                                                              |====================================================================  |  97%  |                                                                              |===================================================================== |  98%  |                                                                              |===================================================================== |  99%  |                                                                              |======================================================================| 100%
 #> acceptance rate: 44.2%
-#> chain completed in 5.881840 seconds
-#> total MCMC run-time: 5.88 seconds
+#> chain completed in 7.406830 seconds
+#> total MCMC run-time: 7.41 seconds
 ```
 
 One important thing to note here is the use of priors. These are passed
@@ -203,7 +207,7 @@ posterior estimate of the selection coefficient tended to be around
 
 ## Sample size calculation
 
-genecastR can also guide sample size planning for future surveys or
+**genecastR** can also guide sample size planning for future surveys or
 experiments. It provides functions that use the posterior prevalence
 distribution to evaluate how large a sample is needed for reliable
 estimates or tests. We illustrate two common criteria below: one based
@@ -234,12 +238,14 @@ week 80. We first compute the margin of error with 100 samples, then
 determine the sample size needed to reach an MOE of 0.1 (10%):
 
 ``` r
-# sample size based on MOE
+# MOE with known sample size (population 1)
 get_MOE(pop = 1, week = 80, n_samp = 100, df_post = df_post)
 #> [1] 0.09284588
 ```
 
 ``` r
+
+# sample size based on MOE (population 1)
 get_sample_size_MOE(pop = 1, week = 80, MOE = 0.1, n_max = 1e3, df_post = df_post)
 #> sample_size 
 #>          88
@@ -247,11 +253,14 @@ get_sample_size_MOE(pop = 1, week = 80, MOE = 0.1, n_max = 1e3, df_post = df_pos
 
 ``` r
 
+# MOE with known sample size (population 2)
 get_MOE(pop = 2, week = 80, n_samp = 100, df_post = df_post)
 #> [1] 0.07623865
 ```
 
 ``` r
+
+# sample size based on MOE (population 1)
 get_sample_size_MOE(pop = 2, week = 80, MOE = 0.1, n_max = 1e3, df_post = df_post)
 #> sample_size 
 #>          61
@@ -262,16 +271,16 @@ samples to obtain a 10% MOE in population 1, but only 61 samples for the
 same MOE in population 2. This is because the prevalence in population 1
 is predicted to be closer to 50%, which is where uncertainty is at its
 largest. Note that these are *minimum* sample sizes for the number of
-*malaria-positive* samples, and should be appropriately buffered to
-account for drop-out and positive fraction.
+*successfully sequenced malaria-positive* samples, and should be
+appropriately buffered to account for drop-out and positive fraction.
 
 ### Threshold test
 
 In the context of hypothesis testing, you might have a threshold
 prevalence of interest (say 5%) that you want to be able to detect if
-exceeded. genecastR includes functions to assess the power for detecting
-whether the true prevalence is above such a threshold, and to determine
-the sample size needed to achieve sufficient power.
+exceeded. **genecastR** includes functions to assess the power for
+detecting whether the true prevalence is above such a threshold, and to
+determine the sample size needed to achieve sufficient power.
 
 - `get_power_ztest(pop, week, n_samp, prev_thresh, df_post)` – Estimates
   the statistical power to detect that the prevalence at a given time
@@ -293,7 +302,7 @@ week 80 testing against a 5% prevalence threshold, and then compute the
 recommended sample size for both population 1 and 2:
 
 ``` r
-# sample size based on z-test
+# power under z-test (population 1)
 get_power_ztest(pop = 1, week = 80, n_samp = 100, prev_thresh = 0.05, df_post = df_post)
 #> # A tibble: 1 × 1
 #>   power
@@ -302,6 +311,8 @@ get_power_ztest(pop = 1, week = 80, n_samp = 100, prev_thresh = 0.05, df_post = 
 ```
 
 ``` r
+
+# sample size under z-test (population 1)
 get_sample_size_ztest(pop = 1, week = 80, prev_thresh = 0.05, df_post = df_post)
 #> sample_size 
 #>          10
@@ -309,14 +320,17 @@ get_sample_size_ztest(pop = 1, week = 80, prev_thresh = 0.05, df_post = df_post)
 
 ``` r
 
+# power under z-test (population 2)
 get_power_ztest(pop = 2, week = 80, n_samp = 100, prev_thresh = 0.05, df_post = df_post)
 #> # A tibble: 1 × 1
 #>   power
 #>   <dbl>
-#> 1 0.327
+#> 1 0.332
 ```
 
 ``` r
+
+# sample size under z-test (population 2)
 get_sample_size_ztest(pop = 2, week = 80, prev_thresh = 0.05, df_post = df_post)
 #> Could not find a sample size that achieves desired power within the user-defined range (n_min = 10:n_max = 1000)
 #> NULL

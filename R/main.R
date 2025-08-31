@@ -4,7 +4,7 @@ if (getRversion() >= "2.15.1") {
   utils::globalVariables(c("pop", "n_samp", "p", "n_pos", "phase", "s", "p0", "p_logistic", "ll",
                            "CI_upper", "CI_lower", "MOE", "prob", "prob_cum", "w", "x", "p_est",
                            "z_stat", "is_signif", "post_above", "quant_group", "post", "sigma",
-                           "week", "y"))
+                           "week", "y", "z"))
 }
 
 #------------------------------------------------
@@ -927,7 +927,8 @@ get_power_ztest <- function(pop, week, n_samp, prev_thresh = 0.05, df_post) {
            z_stat = abs(p_est - prev_thresh) / sqrt(p_est*(1 - p_est) / n_samp),
            is_signif = abs(z_stat) > qnorm(1 - 0.05),
            is_signif = ifelse(n_pos == 0, FALSE, is_signif)) |>
-    summarise(power = sum(prob * is_signif))
+    summarise(power = sum(prob * is_signif)) |>
+    as.data.frame()
 
 }
 

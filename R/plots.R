@@ -142,18 +142,28 @@ plot_mcmc_scatter <- function(mcmc) {
 #' @return A \code{ggplot} object showing a filled contour plot of the posterior density over
 #' the parameter space of \code{s} and \code{sigma}.
 #'
-#' @importFrom ggplot2 ggplot geom_density2d_filled theme_bw xlab ylab aes scale_fill_brewer guides guide_legend
+#' @importFrom ggplot2 ggplot geom_contour_filled theme_bw xlab ylab aes scale_fill_brewer guides guide_legend
 #' @importFrom dplyr filter
+#' @importFrom MASS kde2d
 #' @export
 
 plot_mcmc_density <- function(mcmc) {
 
-  mcmc$output |>
-    filter(phase == "sampling") |>
+  # extract sampling phase
+  df_draws <- mcmc$output |>
+    filter(phase == "sampling")
+
+  # compute 2d kde
+  kde <- MASS::kde2d(x = df_draws$s, y = df_draws$sigma, n = 64)
+
+  # produce contour plot
+  data.frame(x = kde$x, y = rep(kde$y, each = 64), z = as.vector(kde$z)) |>
+    mutate(z = 1 - z / max(z)) |>
     ggplot() + theme_bw() +
-    geom_density2d_filled(aes(x = s, y = sigma), bins = 9) +
-    scale_fill_brewer(palette = "Reds") +
-    guides(fill = guide_legend(reverse = TRUE)) +
+    geom_contour_filled(aes(x = x, y = y, z = z), breaks = seq(0, 1, 0.1)) +
+    scale_fill_manual(values = rev(c('white', brewer.pal(n = 9, name = "Reds"))),
+                      labels = sprintf("%s - %s%%", seq(0, 90, 10), seq(10, 100, 10)),
+                      name = "Posterior quantile") +
     xlab("Selection coefficient (s)") + ylab("Diffusion rate (sigma)")
 
 }

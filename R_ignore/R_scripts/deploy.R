@@ -27,19 +27,6 @@ sigma <- 1/sqrt(N)
 dx <- 0.01
 nx <- 1/dx + 1
 
-# QUESTION
-#20 pm for 15 sites?
-#40 pm for 8 sites?
-# prior on selection coefficient for k13
-# starting frequency of 7.5%
-
-# REMAINING TODO
-# - Tests
-# - document data
-# - Package documentation
-# - Code coverage
-# - Version control
-
 # simulate prevalence
 df_sim_WF <- sim_WF(s = s, p0 = p0, N = N, week_max = week_max, n_pop = n_pop)
 

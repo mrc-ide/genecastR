@@ -7,16 +7,21 @@
 plot_prev(df_post = NULL, df_trajectory = NULL, df_data = NULL, CI_type = "CP")
 }
 \arguments{
-\item{df_post}{Optional data frame of posterior prevalence distributions as returned by
-\code{\link{get_posterior_prev}}. Must include columns \code{pop}, \code{t}, \code{p}, and \code{post}.}
+\item{df_post}{Optional data frame of posterior prevalence distributions as
+returned by \code{\link{get_posterior_prev}}. Must include columns
+\code{pop}, \code{t}, \code{p}, and \code{post}.}
 
-\item{df_trajectory}{Optional data frame of simulated prevalence trajectories (e.g., from \code{sim_WF} or \code{sim_diffusion}),
-with columns \code{pop}, \code{t}, and \code{p}.}
+\item{df_trajectory}{Optional data frame of simulated prevalence trajectories
+(e.g., from \code{sim_WF} or \code{sim_diffusion}), with columns
+\code{pop}, \code{t}, and \code{p}.}
 
-\item{df_data}{Optional data frame of observed prevalence data with columns \code{pop}, \code{t},
-\code{p_est} (estimated prevalence), and confidence interval bounds \code{CI_lower} and \code{CI_upper}.}
+\item{df_data}{Optional data frame of observed prevalence data with columns
+\code{pop}, \code{t}, \code{p_est}, and confidence interval bounds
+\code{CI_lower} and \code{CI_upper}. See \code{\link{get_CIs}} for how to
+produce some of these values from observed counts.}
 
-\item{CI_type}{If plotting data, which type of confidence interval to produce (see \code{?get_CIs()}).}
+\item{CI_type}{If plotting data, which type of confidence interval to produce
+(see \code{?get_CIs()}).}
 }
 \value{
 A \code{ggplot} object visualizing the specified components:
@@ -32,7 +37,8 @@ simulated trajectories and observed data with confidence intervals. Posterior di
 are shown as quantile bands computed from the posterior probability mass at each time point.
 }
 \details{
-The plot includes posterior quantile shading based on the cumulative posterior mass, grouped into bands
-(e.g. 0–20\%, 20–50\%, etc.). Multiple populations are shown using \code{facet_wrap()}.
-At least one of the three arguments must be supplied.
+The plot includes posterior quantile shading based on the cumulative
+posterior mass, grouped into bands (e.g. 0–20\%, 20–50\%, etc.). Multiple
+populations are shown using \code{facet_wrap()}. At least one of the three
+arguments must be supplied.
 }

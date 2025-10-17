@@ -6,7 +6,7 @@
 \usage{
 get_sample_size_ztest(
   pop,
-  week,
+  t,
   prev_thresh,
   power = 0.8,
   n_min = 10,
@@ -17,7 +17,7 @@ get_sample_size_ztest(
 \arguments{
 \item{pop}{Population ID (integer or character) for which to calculate the required sample size.}
 
-\item{week}{A single time point (week) at which sampling will occur.}
+\item{t}{A single time point (class Date) at which sampling will occur.}
 
 \item{prev_thresh}{Prevalence threshold to test against (null hypothesis: prevalence = \code{prev_thresh}).}
 
@@ -28,7 +28,7 @@ get_sample_size_ztest(
 \item{n_max}{Maximum sample size to search (default is \code{1000}).}
 
 \item{df_post}{A data frame of posterior allele frequencies as returned by \code{\link{get_posterior_prev}}.
-Must include columns \code{pop}, \code{week}, \code{p}, and \code{post}.}
+Must include columns \code{pop}, \code{p}, \code{t}, and \code{post}.}
 }
 \value{
 A named numeric vector with the minimum required sample size, or \code{NULL} if no sample size

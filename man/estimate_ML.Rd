@@ -4,15 +4,30 @@
 \alias{estimate_ML}
 \title{Estimate parameters via maximum likelihood}
 \usage{
-estimate_ML(df_data, s_range = c(-0.1, 0.1))
+estimate_ML(
+  df_data,
+  s_range = c(-1, 1),
+  s_intervals = 101,
+  p_range = c(0, 1),
+  p_intervals = 101
+)
 }
 \arguments{
 \item{df_data}{A data frame with observed prevalence data. Must include columns:
-\code{pop} (population ID), \code{week} (sampling week), \code{n_samp} (sample size), and
+\code{pop} (population ID), \code{t} (time as a Date), \code{n_samp} (sample size), and
 \code{n_pos} (number of individuals carrying the allele).}
 
 \item{s_range}{A numeric vector of length 2 specifying the range of selection coefficients
-to explore (default is \code{c(-0.1, 0.1)}).}
+to explore (default is \code{c(-1, 1)}).}
+
+\item{s_intervals}{The number of values of \code{s} to explore between the
+limits of \code{s_range} (default is 101).}
+
+\item{p_range}{A numeric vector of length 2 specifying the range of initial
+allele frequencies to explore (default is \code{c(0, 1)}).}
+
+\item{p_intervals}{The number of values of \code{p} to explore between the
+limits of \code{p_range} (default is 101).}
 }
 \value{
 A data frame with one row per population, containing:

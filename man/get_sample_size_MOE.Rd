@@ -6,7 +6,7 @@
 \usage{
 get_sample_size_MOE(
   pop,
-  week,
+  t,
   MOE,
   n_min = 10,
   n_max = 1000,
@@ -17,7 +17,7 @@ get_sample_size_MOE(
 \arguments{
 \item{pop}{Population ID (integer or character) for which to calculate the required sample size.}
 
-\item{week}{A single time point (week) at which sampling is planned.}
+\item{t}{A single time point (class Date) at which sampling is planned.}
 
 \item{MOE}{Desired margin of error (half-width of the 95\% confidence interval).}
 
@@ -26,7 +26,7 @@ get_sample_size_MOE(
 \item{n_max}{Maximum sample size to search (default is \code{1000}).}
 
 \item{df_post}{A data frame of posterior allele frequencies as returned by \code{\link{get_posterior_prev}}.
-Must include columns \code{pop}, \code{t}, \code{p}, and \code{post}.}
+Must include columns \code{pop}, \code{p}, \code{t}, and \code{post}.}
 
 \item{CI_type}{Which type of MOE to use (see \code{?get_MOE()}).}
 }

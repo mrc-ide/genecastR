@@ -8,9 +8,10 @@ get_posterior_prev(
   df_data,
   s,
   sigma,
+  t_start = min(df_data$t),
+  t_end = max(df_data$t),
+  dt = 7,
   dx = 0.01,
-  week_min = 1,
-  week_max = 52,
   x_init = seq(0, 1, dx)
 )
 }
@@ -22,11 +23,13 @@ get_posterior_prev(
 
 \item{sigma}{A scalar or vector of diffusion parameters, corresponding to the values of \code{s}.}
 
+\item{t_start}{The first date to include in the trajectory (default is min of data).}
+
+\item{t_end}{The last date to include in the trajectory (default is max of data).}
+
+\item{dt}{The time step (in days) between prediction dates (default is 7 days).}
+
 \item{dx}{Step size for discretizing allele frequencies (default is \code{0.01}).}
-
-\item{week_min}{The first week to include in the trajectory (default is \code{1}).}
-
-\item{week_max}{The last week to include in the trajectory (default is \code{52}).}
 
 \item{x_init}{A vector specifying the initial allele frequency distribution (default is \code{seq(0, 1, dx)}).}
 }
@@ -35,7 +38,7 @@ A data frame with columns:
 \describe{
   \item{pop}{Population ID.}
   \item{p}{Allele frequency bin (from \code{x_init}).}
-  \item{week}{Time in weeks.}
+  \item{t}{Date.}
   \item{post}{Posterior probability of allele frequency \code{p} at time \code{t}.}
 }
 }

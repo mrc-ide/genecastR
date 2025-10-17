@@ -6,28 +6,26 @@
 \usage{
 run_mcmc(
   df_data,
-  dx = 0.01,
-  week_min = 1,
   burnin = 100,
   samples = 1000,
   chains = 1,
-  prior_s = function(s) dlnorm_reparam(s, mean = 0.05, sd = 0.05, return_log = TRUE),
-  prior_sigma = function(sigma) dlnorm_reparam(sigma, mean = 0.1, sd = 0.2, return_log =
+  prior_s = function(s) dlnorm_reparam(s, mean = 1, sd = 1, return_log = TRUE),
+  prior_sigma = function(sigma) dlnorm_reparam(sigma, mean = 1, sd = 1, return_log =
     TRUE),
-  s_init = 0.01,
-  sigma_init = 0.01,
-  x_init = seq(0, 1, dx),
+  s_init = 1,
+  sigma_init = 0.1,
+  x_init = rep(1, 1/dx + 1),
+  dx = 0.01,
+  dt = 7,
   pb_markdown = FALSE,
   silent = FALSE
 )
 }
 \arguments{
 \item{df_data}{A data frame of observed prevalence data, with columns:
-\code{pop} (population ID), \code{t} (generation), \code{n_samp} (sample size), and \code{n_pos} (number of positive observations).}
-
-\item{dx}{Step size for discretizing allele frequencies (default is \code{0.01}).}
-
-\item{week_min}{The starting week for likelihood calculation (default is \code{1}).}
+\code{pop} (population ID), \code{t} (sampling time as a Date),
+\code{n_samp} (sample size), and \code{n_pos} (number of positive
+observations).}
 
 \item{burnin}{Number of burn-in iterations per chain (default is \code{1e2}).}
 
@@ -35,25 +33,33 @@ run_mcmc(
 
 \item{chains}{Number of independent MCMC chains to run (default is \code{1}).}
 
-\item{prior_s}{A function specifying the log-prior for the selection coefficient \code{s}.}
+\item{prior_s}{A function specifying the log-prior for the selection coefficient \code{s} (default is a log-normal prior with mean 1 and standard deviation 1).}
 
-\item{prior_sigma}{A function specifying the log-prior for the diffusion parameter \code{sigma}.}
+\item{prior_sigma}{A function specifying the log-prior for the diffusion parameter \code{sigma} (default is a log-normal prior with mean 1 and standard deviation 1).}
 
-\item{s_init}{Initial value for \code{s} in the MCMC (default is \code{0.01}).}
+\item{s_init}{Initial value for \code{s} in the MCMC (default is \code{1}).}
 
-\item{sigma_init}{Initial value for \code{sigma} in the MCMC (default is \code{0.01}).}
+\item{sigma_init}{Initial value for \code{sigma} in the MCMC (default is \code{0.1}).}
 
-\item{x_init}{Initial allele frequency distribution vector (default is \code{seq(0, 1, dx)}).}
+\item{x_init}{Prior vector on the initial allele frequency. This vector will automatically by normalised to sum to one (default is \code{rep(1, 1/dx + 1)}, i.e. a uniform distribution over all \code{1/dx + 1} bins).}
+
+\item{dx}{Step size for discretizing allele frequencies (default is \code{0.01}).}
+
+\item{dt}{Step size in days for discretizing time (default is \code{7} days).}
 
 \item{pb_markdown}{Logical; whether to show progress bars suitable for markdown output (default is \code{FALSE}).}
 
 \item{silent}{Logical; whether to suppress console output during MCMC (default is \code{FALSE}).}
 }
 \value{
-A list containing MCMC results as returned by \code{drjacoby::run_mcmc()}, including posterior samples for all parameters.
+A list containing MCMC results as returned by
+  \code{drjacoby::run_mcmc()}, including posterior samples for all
+  parameters.
 }
 \description{
-Runs MCMC using the \code{drjacoby} package to estimate the selection coefficient (\code{s}) and diffusion parameter (\code{sigma})
-under a diffusion approximation to the Wright-Fisher model. Allows for multiple populations (each assumed to follow independent trajectories)
-and returns full posterior samples.
+Runs MCMC using the \code{drjacoby} package to estimate the selection
+coefficient (\code{s}) and diffusion parameter (\code{sigma}) under a
+diffusion approximation to the Wright-Fisher model. Allows for multiple
+populations, each assumed to follow independent trajectories, and returns
+full posterior samples.
 }

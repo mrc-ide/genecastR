@@ -4,28 +4,47 @@
 \alias{sim_WF}
 \title{Simulate from a Wright-Fisher model}
 \usage{
-sim_WF(s, p0, N, week_max, n_pop)
+sim_WF(
+  s,
+  p0,
+  N,
+  generations,
+  n_pop,
+  t_start = as.Date("2020-01-01"),
+  t_step = 7
+)
 }
 \arguments{
-\item{s}{Selection coefficient. A positive value favours the allele, negative values represent deleterious effects.}
+\item{s}{Selection coefficient (yearly units). A positive value favours the
+allele, negative values represent deleterious effects.}
 
 \item{p0}{Initial allele frequency (between 0 and 1).}
 
 \item{N}{Effective population size (number of diploid individuals).}
 
-\item{week_max}{Number of generations to simulate, where a week is a single generation (valid under a scaled effective population size).}
+\item{generations}{Number of generations to simulate.}
 
 \item{n_pop}{Number of independent populations (replicates) to simulate.}
+
+\item{t_start}{Date of first generation.}
+
+\item{t_step}{Number of days between generations.}
 }
 \value{
 A data frame with columns:
 \describe{
-  \item{pop}{Population (replicate) ID, from 1 to \code{n_pop}.}
-  \item{week}{Week number, from 1 to \code{max_weeks}.}
+  \item{pop}{Population (or replicate) ID, from 1 to \code{n_pop}.}
+  \item{gen}{Generation number, from 1 to \code{generations}.}
+  \item{t}{Date of each generation.}
   \item{p}{Allele frequency in that population and generation.}
 }
 }
 \description{
-Simulates allele frequency trajectories over time using the Wright-Fisher model with selection and genetic drift.
-Each trajectory represents a population evolving independently under the same parameters.
+Simulates allele frequency trajectories over time using the Wright-Fisher
+model with selection and genetic drift. Each trajectory represents a
+population evolving independently under the same parameters.
+}
+\details{
+Note - the selection coefficient (\code{s}) is in units of years. The
+parameter \code{t_step} sets the number of days per generation.
 }

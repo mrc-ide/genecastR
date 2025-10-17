@@ -4,19 +4,19 @@
 \alias{get_power_ztest}
 \title{Get power under a z-test}
 \usage{
-get_power_ztest(pop, week, n_samp, prev_thresh = 0.05, df_post)
+get_power_ztest(pop, t, n_samp, prev_thresh = 0.05, df_post)
 }
 \arguments{
 \item{pop}{Population ID (integer or character) for which to compute power.}
 
-\item{week}{A single time point (week) at which sampling will occur.}
+\item{t}{A single time point (class Date) at which sampling will occur.}
 
 \item{n_samp}{A single scalar specifying the number of individuals to be sampled.}
 
 \item{prev_thresh}{Prevalence threshold to test against (null hypothesis: prevalence = \code{prev_thresh}).}
 
 \item{df_post}{A data frame of posterior allele frequencies as returned by \code{\link{get_posterior_prev}}.
-Must include columns \code{pop}, \code{week}, \code{p}, and \code{post}.}
+Must include columns \code{pop}, \code{p}, \code{t}, and \code{post}.}
 }
 \value{
 A data frame with a single value: the estimated power (probability of detecting a significant deviation

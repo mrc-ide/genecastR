@@ -40,8 +40,5 @@
 #' step-by-step introduction and installation notes.
 #'
 #' @keywords package
-#' @docType package
-#' @name genecastR
 #' @aliases genecastR-package
-#' @_PACKAGE
-NULL
+"_PACKAGE"

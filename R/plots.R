@@ -7,13 +7,18 @@
 #' simulated trajectories and observed data with confidence intervals. Posterior distributions
 #' are shown as quantile bands computed from the posterior probability mass at each time point.
 #'
-#' @param df_post Optional data frame of posterior prevalence distributions as returned by
-#' \code{\link{get_posterior_prev}}. Must include columns \code{pop}, \code{t}, \code{p}, and \code{post}.
-#' @param df_trajectory Optional data frame of simulated prevalence trajectories (e.g., from \code{sim_WF} or \code{sim_diffusion}),
-#' with columns \code{pop}, \code{t}, and \code{p}.
-#' @param df_data Optional data frame of observed prevalence data with columns \code{pop}, \code{t},
-#' \code{p_est} (estimated prevalence), and confidence interval bounds \code{CI_lower} and \code{CI_upper}.
-#' @param CI_type If plotting data, which type of confidence interval to produce (see \code{?get_CIs()}).
+#' @param df_post Optional data frame of posterior prevalence distributions as
+#'   returned by \code{\link{get_posterior_prev}}. Must include columns
+#'   \code{pop}, \code{t}, \code{p}, and \code{post}.
+#' @param df_trajectory Optional data frame of simulated prevalence trajectories
+#'   (e.g., from \code{sim_WF} or \code{sim_diffusion}), with columns
+#'   \code{pop}, \code{t}, and \code{p}.
+#' @param df_data Optional data frame of observed prevalence data with columns
+#'   \code{pop}, \code{t}, \code{p_est}, and confidence interval bounds
+#'   \code{CI_lower} and \code{CI_upper}. See \code{\link{get_CIs}} for how to
+#'   produce some of these values from observed counts.
+#' @param CI_type If plotting data, which type of confidence interval to produce
+#'   (see \code{?get_CIs()}).
 #'
 #' @return A \code{ggplot} object visualizing the specified components:
 #' \itemize{
@@ -23,12 +28,13 @@
 #' }
 #'
 #' @details
-#' The plot includes posterior quantile shading based on the cumulative posterior mass, grouped into bands
-#' (e.g. 0–20\%, 20–50\%, etc.). Multiple populations are shown using \code{facet_wrap()}.
-#' At least one of the three arguments must be supplied.
+#' The plot includes posterior quantile shading based on the cumulative
+#' posterior mass, grouped into bands (e.g. 0–20\%, 20–50\%, etc.). Multiple
+#' populations are shown using \code{facet_wrap()}. At least one of the three
+#' arguments must be supplied.
 #'
 #' @importFrom ggplot2 ggplot geom_raster geom_line geom_pointrange theme_bw aes facet_wrap scale_fill_brewer scale_y_continuous geom_tile scale_fill_manual
-#' @importFrom dplyr group_by arrange mutate filter
+#' @importFrom dplyr group_by arrange mutate filter lag
 #' @export
 
 plot_prev <- function(df_post = NULL, df_trajectory = NULL, df_data = NULL, CI_type = "CP") {
@@ -48,14 +54,14 @@ plot_prev <- function(df_post = NULL, df_trajectory = NULL, df_data = NULL, CI_t
     quant_colors <- RColorBrewer::brewer.pal(4, "Blues")
 
     ret <- ret + geom_tile(aes(x = x, y = y, fill = quant_group), show.legend = TRUE, alpha = 0,
-              data = data.frame(x = 1:4, y = 1, quant_group = factor(quant_levels, levels = quant_levels))) +
+              data = data.frame(x = rep(df_post$t[1], 4), y = 1, quant_group = factor(quant_levels, levels = quant_levels))) +
       scale_fill_manual(values = quant_colors, name = "Credible\nInterval", drop = FALSE,
                         guide = guide_legend(override.aes = list(alpha = 1)))
 
     # more funny business to expand limits so no part of raster gets cut out
     dx <- df_post |>
       filter(pop == df_post$pop[1]) |>
-      filter(week == df_post$week[1]) |>
+      filter(t == df_post$t[1]) |>
       pull(p) |>
       diff() |>
       min()
@@ -63,17 +69,18 @@ plot_prev <- function(df_post = NULL, df_trajectory = NULL, df_data = NULL, CI_t
 
     # convert posterior probabilities to quantile groups
     df_quant_group <- df_post |>
-      group_by(pop, week) |>
+      group_by(pop, t) |>
       arrange(-post) |>
-      mutate(post_above = cumsum(post),
-             quant_group = cut(post_above, breaks = c(0, 0.2, 0.5, 0.8, 0.95)),
-             quant_group = 5 - as.numeric(quant_group),
-             quant_group = quant_levels[quant_group],
-             quant_group = factor(quant_group, levels = quant_levels)) |>
-      filter(!is.na(quant_group))
+      mutate(cs = cumsum(post),
+             cs_lag = dplyr::lag(cs, default = 0),
+             quant_group = cut(cs_lag, breaks = c(0, 0.2, 0.5, 0.8, 0.95), include.lowest = TRUE),
+             quant_num = 5 - as.numeric(quant_group),
+             quant_fact = quant_levels[quant_num],
+             quant_fact = factor(quant_fact, levels = quant_levels)) |>
+      filter(!is.na(quant_fact))
 
     ret <- ret +
-      geom_raster(aes(x = week, y = p*100, fill = quant_group), data = df_quant_group)
+      geom_raster(aes(x = t, y = p*100, fill = quant_fact), data = df_quant_group)
   } else {
     ret <- ret + scale_y_continuous(limits = c(0, 100), expand = c(0, 0))
   }
@@ -81,19 +88,19 @@ plot_prev <- function(df_post = NULL, df_trajectory = NULL, df_data = NULL, CI_t
   # overlay trajectories
   if (!is.null(df_trajectory)) {
     ret <- ret +
-      geom_line(aes(x = week, y = p*100), col = "firebrick2", data = df_trajectory)
+      geom_line(aes(x = t, y = p*100), col = "firebrick2", data = df_trajectory)
   }
 
   # overlay raw data CIs
   if (!is.null(df_data)) {
     ret <- ret +
-      geom_pointrange(aes(x = week, y = p_est*100, ymin = CI_lower*100, ymax = CI_upper*100),
+      geom_pointrange(aes(x = t, y = p_est*100, ymin = CI_lower*100, ymax = CI_upper*100),
                       size = 0.2, data = get_CIs(df_data, CI_type = CI_type))
   }
 
   # final aesthetics
   ret <- ret +
-    xlab("Time (weeks)") + ylab("Allele Prevalence (%)") +
+    xlab("Time") + ylab("Allele Prevalence (%)") +
     facet_wrap(~pop)
 
   return(ret)
@@ -142,7 +149,7 @@ plot_mcmc_scatter <- function(mcmc) {
 #' @return A \code{ggplot} object showing a filled contour plot of the posterior density over
 #' the parameter space of \code{s} and \code{sigma}.
 #'
-#' @importFrom ggplot2 ggplot geom_contour_filled theme_bw xlab ylab aes scale_fill_brewer guides guide_legend
+#' @importFrom ggplot2 ggplot geom_contour_filled theme_bw xlab ylab aes scale_fill_brewer guides guide_legend scale_x_continuous scale_y_continuous
 #' @importFrom dplyr filter
 #' @importFrom MASS kde2d
 #' @export
@@ -161,9 +168,11 @@ plot_mcmc_density <- function(mcmc) {
     mutate(z = 1 - z / max(z)) |>
     ggplot() + theme_bw() +
     geom_contour_filled(aes(x = x, y = y, z = z), breaks = seq(0, 1, 0.1)) +
-    scale_fill_manual(values = rev(c('white', brewer.pal(n = 9, name = "Reds"))),
+    scale_fill_manual(values = rev(c(NA, brewer.pal(n = 9, name = "Reds"))),
                       labels = sprintf("%s - %s%%", seq(0, 90, 10), seq(10, 100, 10)),
                       name = "Posterior quantile") +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
     xlab("Selection coefficient (s)") + ylab("Diffusion rate (sigma)")
 
 }

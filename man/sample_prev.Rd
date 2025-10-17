@@ -4,25 +4,28 @@
 \alias{sample_prev}
 \title{Sample from a simulated prevalence trajectory}
 \usage{
-sample_prev(df_sim, df_data)
+sample_prev(df_sim, df_sample)
 }
 \arguments{
-\item{df_sim}{A data frame of simulated allele frequency trajectories, typically from \code{sim_WF()} or \code{sim_diffusion()}.
-Must include columns \code{pop}, \code{week}, and \code{p} (true frequency).}
+\item{df_sim}{A data frame of simulated allele frequency trajectories,
+typically from \code{sim_WF()} or \code{sim_diffusion()}. Must include
+columns \code{pop}, \code{gen}, and \code{p}.}
 
-\item{df_data}{A data frame specifying sampling points, with columns \code{pop}, \code{week}, and \code{n_samp}
-(number of individuals sampled per population and time point).}
+\item{df_sample}{A data frame specifying sampling points, with columns
+\code{pop}, \code{gen}, and \code{n_samp} (number of individuals sampled
+per population and generation).}
 }
 \value{
 A data frame with the following columns:
 \describe{
   \item{pop}{Population ID.}
-  \item{week}{Week of study.}
+  \item{t}{Date of sampling}
   \item{n_samp}{Number of individuals sampled at that time point.}
   \item{n_pos}{Number of positive (allele-carrying) individuals sampled (binomial draw).}
 }
 }
 \description{
-Samples observed allele prevalence from a simulated trajectory by drawing from a binomial distribution,
-based on the true simulated allele frequencies and a specified number of sampled individuals.
+Samples observed allele prevalence from a simulated trajectory by drawing
+from a binomial distribution, based on the true simulated allele frequencies
+and a specified number of sampled individuals.
 }

@@ -4,30 +4,48 @@
 \alias{sim_diffusion}
 \title{Simulate from a diffusion approximation to the Wright-Fisher model}
 \usage{
-sim_diffusion(s, p0, sigma, dx = 0.01, week_max, n_pop)
+sim_diffusion(
+  s,
+  p0,
+  sigma,
+  generations,
+  n_pop,
+  t_start = as.Date("2020-01-01"),
+  t_step = 7,
+  dx = 0.01
+)
 }
 \arguments{
-\item{s}{Selection coefficient. A positive value favours the allele, negative values represent deleterious effects.}
+\item{s}{Selection coefficient (yearly units). A positive value favours the
+allele, negative values represent deleterious effects.}
 
 \item{p0}{Initial allele frequency (between 0 and 1).}
 
-\item{sigma}{Diffusion standard deviation. Controls the strength of genetic drift.}
+\item{sigma}{Diffusion standard deviation per generation. Controls the
+strength of genetic drift.}
 
-\item{dx}{Discretization step size for the allele frequency space (default is 0.01).}
-
-\item{week_max}{Number of generations to simulate, where a week is a single generation (valid under a scaled effective population size).}
+\item{generations}{Number of generations to simulate.}
 
 \item{n_pop}{Number of independent populations (replicates) to simulate.}
+
+\item{t_start}{Date of first generation.}
+
+\item{t_step}{Number of days between generations.}
+
+\item{dx}{Discretization step size for the allele frequency space (default is 0.01).}
 }
 \value{
 A data frame with columns:
 \describe{
-  \item{pop}{Population (replicate) ID, from 1 to \code{n_deme}.}
-  \item{week}{Week number, from 1 to \code{max_weeks}.}
-  \item{p}{Allele frequency (discretized), between 0 and 1.}
+  \item{pop}{Population (or replicate) ID, from 1 to \code{n_pop}.}
+  \item{gen}{Generation number, from 1 to \code{generations}.}
+  \item{t}{Date of each generation.}
+  \item{p}{Allele frequency in that population and generation.}
 }
 }
 \description{
-Simulates allele frequency trajectories using a diffusion approximation to the Wright-Fisher model,
-incorporating selection and drift. Allele frequencies evolve as a discrete approximation to a continuous diffusion process.
+Simulates allele frequency trajectories using a diffusion approximation to
+the Wright-Fisher model, incorporating selection and drift. Allele
+frequencies evolve as a discrete approximation to a continuous diffusion
+process.
 }

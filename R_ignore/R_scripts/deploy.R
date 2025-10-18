@@ -83,7 +83,6 @@ plot_mcmc_density(mcmc)
 
 estimate_Bayesian(mcmc)
 
-
 # solve HMM
 df_mcmc_draws <- sample_mcmc(mcmc, n_draws = 100)
 df_post <- get_posterior_prev(df_data = df_data,

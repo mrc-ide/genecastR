@@ -12,7 +12,7 @@ get_posterior_prev(
   t_end = max(df_data$t),
   dt = 7,
   dx = 0.01,
-  x_init = seq(0, 1, dx)
+  x_init = rep(1, 1/dx + 1)
 )
 }
 \arguments{
@@ -31,7 +31,7 @@ get_posterior_prev(
 
 \item{dx}{Step size for discretizing allele frequencies (default is \code{0.01}).}
 
-\item{x_init}{A vector specifying the initial allele frequency distribution (default is \code{seq(0, 1, dx)}).}
+\item{x_init}{Prior vector on the initial allele frequency. This vector will automatically by normalised to sum to one (default is \code{rep(1, 1/dx + 1)}, i.e. a uniform distribution over all \code{1/dx + 1} bins).}
 }
 \value{
 A data frame with columns:

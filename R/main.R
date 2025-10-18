@@ -424,9 +424,20 @@ dlnorm_reparam <- function(x, mean, sd, return_log = FALSE) {
 #' @noRd
 loglike_R <- function(params, data, misc) {
 
+  # scale parameters to daily
+  s_per_day <- params["s"] / 365
+  sigma_per_day <- sqrt(params["sigma"]^2 / 365)
+
+  # calculate transition matrix for all possible required time diffs
+  trans_mat_list <- vector("list", length = max(misc$dt_unique))
+  for (i in misc$dt_unique) {
+    trans_mat_list[[i]] <- get_trans_mat(s = s_per_day, sigma = sigma_per_day, dx = misc$dx, dt = i)
+  }
+
   # calculate log-likelihood over populations
   ll <- sapply(data$df, function(df) {
-    get_forward_ll(s = params["s"],
+    get_forward_ll(trans_mat_list = trans_mat_list,
+                   s = params["s"],
                    sigma = params["sigma"],
                    t_samp = df$t_numeric,
                    n_samp = df$n_samp,
@@ -519,7 +530,8 @@ run_mcmc <- function(df_data,
   # create expanded data frames that contain the observed sampling times plus
   # interpolated times
   data_list <- df_data |>
-    group_split(pop) |>
+    group_by(pop) |>
+    group_split() |>
     sapply(function(df) {
       df <- df |>
         mutate(t_numeric = as.numeric(t - min(t)))
@@ -531,6 +543,14 @@ run_mcmc <- function(df_data,
         arrange(t_numeric)
     }, simplify = FALSE)
 
+  # calculate all unique differences in times within data_list
+  dt_unique <- mapply(function(x) {
+    unique(diff(x$t_numeric))
+  }, data_list, SIMPLIFY = FALSE) |>
+    unlist() |>
+    unique() |>
+    sort()
+
   # define parameters data.frame
   df_params <- rbind.data.frame(list(name = "s", min = -Inf, max = Inf, init = s_init),
                                 list(name = "sigma", min = 0, max = Inf, init = sigma_init))
@@ -539,7 +559,8 @@ run_mcmc <- function(df_data,
   misc_list <- list(dx = dx,
                     prior_s = prior_s,
                     prior_sigma = prior_sigma,
-                    x_init = x_init / sum(x_init))
+                    x_init = x_init / sum(x_init),
+                    dt_unique = dt_unique)
 
   # run MCMC
   mcmc <- drjacoby::run_mcmc(data = list(df = data_list),
@@ -629,20 +650,12 @@ estimate_Bayesian <- function(mcmc) {
 #------------------------------------------------
 # runs forward algorithm in a single population, returns integrated log-likelihood.
 #' @noRd
-get_forward_ll <- function(s, sigma, t_samp, n_samp, n_pos, x_init, dx) {
+get_forward_ll <- function(trans_mat_list, s, sigma, t_samp, n_samp, n_pos, x_init, dx) {
 
   # set up allele prevalence bins
   nx <- length(x_init)
   x <- seq(0, 1, l = nx)
   z_forward <- x_init
-
-  # scale parameters to daily
-  s_per_day <- s / 365
-  sigma_per_day <- sqrt(sigma^2 / 365)
-
-  # keep a running cache of trans_mats
-  dt_cache <- NULL
-  trans_mat_cache <- list()
 
   # run forward algorithm
   ret <- 0
@@ -652,16 +665,10 @@ get_forward_ll <- function(s, sigma, t_samp, n_samp, n_pos, x_init, dx) {
     # apply transition matrix
     if (i > 1) {
 
-      # calculate new trans_mat or get from cache
+      # get trans_mat for this dt
       dt <- t_samp[i] - t_samp[i-1]
       if (dt != dt_prev) {      # small speedup as no need to reload trans_mat if unchanged
-        if (dt %in% dt_cache) {
-          trans_mat <- trans_mat_cache[[match(dt, dt_cache)]]
-        } else {
-          dt_cache <- c(dt_cache, dt)
-          trans_mat <- get_trans_mat(s = s_per_day, sigma = sigma_per_day, dx = dx, dt = dt)
-          trans_mat_cache <- c(trans_mat_cache, list(trans_mat))
-        }
+        trans_mat <- trans_mat_list[[dt]]
         dt_prev <- dt
       }
 
@@ -800,7 +807,7 @@ get_backward_mat <- function(s, sigma, t_samp, n_samp, n_pos, x_init, dx) {
 #' @param t_end The last date to include in the trajectory (default is max of data).
 #' @param dt The time step (in days) between prediction dates (default is 7 days).
 #' @param dx Step size for discretizing allele frequencies (default is \code{0.01}).
-#' @param x_init A vector specifying the initial allele frequency distribution (default is \code{seq(0, 1, dx)}).
+#' @param x_init Prior vector on the initial allele frequency. This vector will automatically by normalised to sum to one (default is \code{rep(1, 1/dx + 1)}, i.e. a uniform distribution over all \code{1/dx + 1} bins).
 #'
 #' @return A data frame with columns:
 #' \describe{
@@ -821,7 +828,7 @@ get_posterior_prev <- function(df_data,
                                t_end = max(df_data$t),
                                dt = 7,
                                dx = 0.01,
-                               x_init = seq(0, 1, dx)) {
+                               x_init = rep(1, 1/dx + 1)) {
 
   # input checks
   assert_dataframe(df_data)
@@ -849,7 +856,8 @@ get_posterior_prev <- function(df_data,
   # interpolated times
   t_predict <- seq(t_start, length = ceiling(as.numeric(t_end - t_start) / dt) + 1, by = dt)
   data_list <- df_data |>
-    group_split(pop) |>
+    group_by(pop) |>
+    group_split() |>
     sapply(function(df) {
       data.frame(pop = df$pop[1],
                  t = t_predict,

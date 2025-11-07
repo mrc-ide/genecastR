@@ -11,14 +11,16 @@
 library(ggplot2)
 library(tidyverse)
 
-set.seed(1)
+#set.seed(1)
 
 # ------------------------------------------------------------------
 
 # define parameters
 s <- 0.5
-p0 <- 0.1
+p0 <- 0.0
 N <- 1e3
+m <- 0.05
+p_import <- 0.5
 generations <- 52*5
 t_step <- 7
 n_samp <- 100
@@ -26,24 +28,31 @@ n_pop <- 9
 sigma <- 1/sqrt(N)
 dx <- 0.01
 nx <- 1/dx + 1
-sigma_true <- sqrt(365 / (N*dt))
+sigma_true <- sqrt(365 / (N*t_step))
 
 # simulate prevalence
-df_sim_WF <- sim_WF(s = s, p0 = p0, N = N, generations = generations, n_pop = n_pop, t_step = t_step)
+df_sim_WF <- sim_WF(s = s, p0 = p0, N = N, m = m, p_import = p_import,
+                    generations = generations, n_pop = n_pop, t_step = t_step)
 
 df_sim_WF |>
   ggplot() + theme_bw() +
   geom_line(aes(x = t, y = p, col = factor(pop))) +
-  ggtitle("Wright-Fisher simulation")
+  ggtitle("Wright-Fisher simulation") +
+  ylim(c(0, 1)) +
+  theme(legend.position = "none")
+
 
 # or simulate from diffusion approximation
-df_sim_diff <- sim_diffusion(s = s, p0 = p0, sigma = sigma_true, generations = generations,
-                             n_pop = n_pop, t_step = t_step)
+df_sim_diff <- sim_diffusion(s = s, p0 = p0, sigma = sigma_true,
+                             generations = generations, n_pop = n_pop, t_step = t_step)
 
 df_sim_diff |>
   ggplot() + theme_bw() +
   geom_line(aes(x = t, y = p, col = factor(pop))) +
-  ggtitle("Diffusion simulation")
+  ggtitle("Diffusion simulation") +
+  ylim(c(0, 1)) +
+  theme(legend.position = "none")
+
 
 # sample data
 df_sample <- expand_grid(pop = 1:n_pop, gen = seq(0, 52*5, by = 16), n_samp = n_samp)
@@ -72,8 +81,9 @@ df_sim_WF |>
 # estimate parameters via MCMC
 mcmc <- run_mcmc(df_data = df_data,
                  burnin = 1e2,
-                 samples = 1e3,
-                 dt = 7)
+                 samples = 1e2,
+                 chains = 1,
+                 dt = 7*4)
 
 #drjacoby::plot_trace(mcmc)
 #drjacoby::plot_pairs(mcmc)

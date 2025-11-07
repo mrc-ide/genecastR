@@ -4,11 +4,13 @@
 \alias{plot_mcmc_scatter}
 \title{Scatter plot of posterior MCMC samples}
 \usage{
-plot_mcmc_scatter(mcmc)
+plot_mcmc_scatter(mcmc, alpha = 0.5)
 }
 \arguments{
 \item{mcmc}{An object returned by \code{run_mcmc()}, containing the MCMC output
 including both burn-in and sampling phases.}
+
+\item{alpha}{Opacity of points (defaults to 0.5).}
 }
 \value{
 A \code{ggplot} object showing a scatter plot of posterior samples with \code{s}

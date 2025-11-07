@@ -24,6 +24,8 @@ if (getRversion() >= "2.15.1") {
 #'   allele, negative values represent deleterious effects.
 #' @param p0 Initial allele frequency (between 0 and 1).
 #' @param N Effective population size (number of diploid individuals).
+#' @param m Migration (importation) rate into populations (yearly units).
+#' @param p_import Allele frequency in the "continent" from which migrants originate.
 #' @param generations Number of generations to simulate.
 #' @param n_pop Number of independent populations (replicates) to simulate.
 #' @param t_start Date of first generation.
@@ -40,36 +42,50 @@ if (getRversion() >= "2.15.1") {
 #' @importFrom stats rbinom
 #' @export
 
-sim_WF <- function(s, p0, N, generations, n_pop,
+sim_WF <- function(s, p0, N, m = 0, p_import = 0.5, generations, n_pop,
                    t_start = as.Date("2020-01-01"), t_step = 7) {
 
   # input checks
   assert_single_numeric(s)
   assert_single_bounded(p0)
   assert_single_pos_int(N, zero_allowed = FALSE)
+  assert_single_bounded(m)
+  assert_single_bounded(p_import)
   assert_single_pos_int(generations, zero_allowed = FALSE)
   assert_single_pos_int(n_pop, zero_allowed = FALSE)
   assert_class(t_start, "Date")
   assert_single_pos_int(t_step, zero_allowed = FALSE)
 
-  # calculate selection coefficient per generation
+  # calculate parameters per generation
   s_per_gen <- s / 365 * t_step
+  m_per_gen <- m / 365 * t_step
 
-  # initialize matrix for storing allele frequencies. Rows are
-  # generations, columns are populations (demes)
-  p_mat <- matrix(0, nrow = generations, ncol = n_pop)
-  p_mat[1,] <- round(p0*N) / N
+  # initialize matrix for storing allele counts. Rows are generations, columns
+  # are populations (demes)
+  z_mat <- matrix(0, nrow = generations, ncol = n_pop)
+  z_mat[1,] <- round(p0*N)
 
   # run WF simulation
   for (t in 2:generations) {
-    p <- p_mat[t-1,]
+    z <- z_mat[t-1,]
+
+    # draw number of migrants. Start by removing this many individuals from the
+    # current population, i.e. making space for the new imports
+    n_replace <- rbinom(n = n_pop, size = N, prob = m_per_gen)
+    n_replace_pos <- rbinom(n = n_pop, size = n_replace, prob = z / N)
+    z <- z - n_replace_pos
+
+    # import migrants
+    z <- z + rbinom(n = n_pop, size = n_replace, prob = p_import)
 
     # apply selection
+    p <- z / N
     p_sel <- p*(1 + s_per_gen) / (p*(1 + s_per_gen) + (1 - p))
 
     # apply drift
-    p_mat[t,] <- rbinom(n_pop, N, prob = p_sel) / N
+    z_mat[t,] <- rbinom(n_pop, N, prob = p_sel)
   }
+  p_mat <- z_mat / N
 
   # convert to long data.frame
   ret <- data.frame(pop = rep(1:n_pop, each = generations),
@@ -133,7 +149,7 @@ get_trans_mat <- function(s, sigma, dx = 0.01, dt = 1) {
 #'
 #' @export
 
-sim_diffusion <- function(s, p0, sigma, generations, n_pop,
+sim_diffusion <- function(s, p0, sigma, m = 0, p_import = 0.5, generations, n_pop,
                           t_start = as.Date("2020-01-01"), t_step = 7,
                           dx = 0.01) {
 
@@ -141,6 +157,8 @@ sim_diffusion <- function(s, p0, sigma, generations, n_pop,
   assert_single_numeric(s)
   assert_single_bounded(p0)
   assert_single_pos(sigma, zero_allowed = FALSE)
+  assert_single_bounded(m)
+  assert_single_bounded(p_import)
   assert_single_pos_int(generations, zero_allowed = FALSE)
   assert_single_pos_int(n_pop, zero_allowed = FALSE)
   assert_class(t_start, "Date")
@@ -155,6 +173,7 @@ sim_diffusion <- function(s, p0, sigma, generations, n_pop,
 
   # scale parameters to daily
   s_per_day <- s / 365
+  m_per_day <- m / 365
   sigma_per_day <- sqrt(sigma^2 / 365)
 
   # generate transition matrix
@@ -323,6 +342,9 @@ get_logistic <- function(s, p0, t) {
 #'   allele frequencies to explore (default is \code{c(0, 1)}).
 #' @param p_intervals The number of values of \code{p} to explore between the
 #'   limits of \code{p_range} (default is 101).
+#' @param t_start The time at which to estimate the initial prevalence (defaults
+#'   to the first time in the observed data).
+#'
 #'
 #' @return A data frame with one row per population, containing:
 #' \describe{
@@ -339,7 +361,8 @@ get_logistic <- function(s, p0, t) {
 #' @export
 
 estimate_ML <- function(df_data, s_range = c(-1, 1), s_intervals = 101,
-                        p_range = c(0, 1), p_intervals = 101) {
+                        p_range = c(0, 1), p_intervals = 101,
+                        t_start = min(df_data$t)) {
 
   # input checks
   assert_dataframe(df_data)
@@ -349,6 +372,7 @@ estimate_ML <- function(df_data, s_range = c(-1, 1), s_intervals = 101,
   assert_limit(p_range)
   assert_bounded(p_range)
   assert_single_pos_int(p_intervals, zero_allowed = FALSE)
+  assert_class(t_start, "Date")
 
   # create data.frame of parameter combinations to explore
   df_params <- expand_grid(s = seq(s_range[1], s_range[2], l = s_intervals),
@@ -356,7 +380,7 @@ estimate_ML <- function(df_data, s_range = c(-1, 1), s_intervals = 101,
 
   # perform calculation separately for each deme
   ret <- df_data |>
-    mutate(t_numeric = as.numeric(t - min(t)) / 365) |>
+    mutate(t_numeric = as.numeric(t - t_start) / 365) |>
     group_split(pop) |>
     lapply(function(df) {
 

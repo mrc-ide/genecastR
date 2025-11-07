@@ -116,6 +116,7 @@ plot_prev <- function(df_post = NULL, df_trajectory = NULL, df_data = NULL, CI_t
 #'
 #' @param mcmc An object returned by \code{run_mcmc()}, containing the MCMC output
 #' including both burn-in and sampling phases.
+#' @param alpha Opacity of points (defaults to 0.5).
 #'
 #' @return A \code{ggplot} object showing a scatter plot of posterior samples with \code{s}
 #' on the x-axis and \code{sigma} on the y-axis.
@@ -125,12 +126,12 @@ plot_prev <- function(df_post = NULL, df_trajectory = NULL, df_data = NULL, CI_t
 #' @importFrom RColorBrewer brewer.pal
 #' @export
 
-plot_mcmc_scatter <- function(mcmc) {
+plot_mcmc_scatter <- function(mcmc, alpha = 0.5) {
 
   mcmc$output |>
     filter(phase == "sampling") |>
     ggplot() + theme_bw() +
-    geom_point(aes(x = s, y = sigma), col = brewer.pal(n = 3, name = "Reds")[3], alpha = 0.5) +
+    geom_point(aes(x = s, y = sigma), col = brewer.pal(n = 3, name = "Reds")[3], alpha = alpha) +
     xlab("Selection coefficient (s)") + ylab("Diffusion rate (sigma)")
 }
 

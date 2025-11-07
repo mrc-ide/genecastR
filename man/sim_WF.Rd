@@ -8,6 +8,8 @@ sim_WF(
   s,
   p0,
   N,
+  m = 0,
+  p_import = 0.5,
   generations,
   n_pop,
   t_start = as.Date("2020-01-01"),
@@ -21,6 +23,10 @@ allele, negative values represent deleterious effects.}
 \item{p0}{Initial allele frequency (between 0 and 1).}
 
 \item{N}{Effective population size (number of diploid individuals).}
+
+\item{m}{Migration (importation) rate into populations (yearly units).}
+
+\item{p_import}{Allele frequency in the "continent" from which migrants originate.}
 
 \item{generations}{Number of generations to simulate.}
 

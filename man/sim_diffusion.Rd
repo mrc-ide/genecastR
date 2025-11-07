@@ -8,6 +8,8 @@ sim_diffusion(
   s,
   p0,
   sigma,
+  m = 0,
+  p_import = 0.5,
   generations,
   n_pop,
   t_start = as.Date("2020-01-01"),
@@ -23,6 +25,10 @@ allele, negative values represent deleterious effects.}
 
 \item{sigma}{Diffusion standard deviation per generation. Controls the
 strength of genetic drift.}
+
+\item{m}{Migration (importation) rate into populations (yearly units).}
+
+\item{p_import}{Allele frequency in the "continent" from which migrants originate.}
 
 \item{generations}{Number of generations to simulate.}
 

@@ -9,7 +9,8 @@ estimate_ML(
   s_range = c(-1, 1),
   s_intervals = 101,
   p_range = c(0, 1),
-  p_intervals = 101
+  p_intervals = 101,
+  t_start = min(df_data$t)
 )
 }
 \arguments{
@@ -28,6 +29,9 @@ allele frequencies to explore (default is \code{c(0, 1)}).}
 
 \item{p_intervals}{The number of values of \code{p} to explore between the
 limits of \code{p_range} (default is 101).}
+
+\item{t_start}{The time at which to estimate the initial prevalence (defaults
+to the first time in the observed data).}
 }
 \value{
 A data frame with one row per population, containing:

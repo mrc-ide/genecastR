@@ -27,6 +27,6 @@ Config/testthat/edition: 3
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.1
 NeedsCompilation: yes
-Packaged: 2026-11-12 11:32:45 UTC; mwhiteho
+Packaged: 2026-11-12 11:49:42 UTC; mwhiteho
 Author: Michael Whitehouse [aut, cre]
 Maintainer: Michael Whitehouse <michael.whitehouse@imperial.ac.uk>

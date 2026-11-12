@@ -6,7 +6,7 @@
     GNU Fortran (GCC) 14.2.0
 * running under: macOS Golden Gate 27.2
 * using session charset: UTF-8
-* current time: 2026-11-12 11:32:51 UTC
+* current time: 2026-11-12 11:49:42 UTC
 * using options ‘--no-manual --as-cran’
 * checking for file ‘GeneCastR/DESCRIPTION’ ... OK
 * this is package ‘GeneCastR’ version ‘0.0.0.9000’
@@ -75,6 +75,6 @@ Non-standard file/directory found at top level:
 * checking installed files from ‘inst/doc’ ... OK
 * checking files in ‘vignettes’ ... OK
 * checking examples ... OK
-* checking examples with --run-donttest ... [26s/26s] OK
+* checking examples with --run-donttest ... [27s/27s] OK
 * checking for unstated dependencies in ‘tests’ ... OK
 * checking tests ...

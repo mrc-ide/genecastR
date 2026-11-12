@@ -187,22 +187,30 @@ static void gc_kernel_fill(int N, double alpha, std::vector<double>& P) {
 // folded onto the last cell so the row sums to exactly one.  Leaking even
 // 1e-12 here biases the likelihood downwards over T steps, and it bites
 // hardest in the small demes where the tail is heaviest relative to N.
+// The folded tail is taken from ppois rather than as 1 - sum(pmf).  When the
+// tail is small -- 2e-7 at N = 12, lambda = 2 -- that subtraction cancels
+// away nine digits, so the last cell inherited a relative error of order
+// 1e-9 and its low bits moved with the platform's libm.  R's dpois and ppois
+// are the same code everywhere and the tail is computed directly, so the row
+// is both accurate and reproducible.
 void poisson_row_fill(int N, double lam, double* row) {
   if (lam <= 0.0) {
     for (int k = 0; k <= N; ++k) row[k] = 0.0;
     row[0] = 1.0;
     return;
   }
-  const double loglam = std::log(lam);
+  for (int k = 0; k <= N; ++k) row[k] = ::Rf_dpois((double)k, lam, 0);
+  const double tail = ::Rf_ppois((double)N, lam, /*lower*/0, /*log*/0);
+  if (tail > 0.0) row[N] += tail;
+  // Renormalise rather than trust the two to sum to one in floating point:
+  // leaking even 1e-12 here biases the likelihood downwards over T steps,
+  // and it bites hardest in the small demes where the tail is heaviest.
   double s = 0.0;
-  for (int k = 0; k <= N; ++k) {
-    const double lt = -lam + (k == 0 ? 0.0 : (double)k * loglam)
-                      - std::lgamma((double)k + 1.0);
-    row[k] = std::exp(lt);
-    s += row[k];
+  for (int k = 0; k <= N; ++k) s += row[k];
+  if (s > 0.0 && s != 1.0) {
+    const double inv = 1.0 / s;
+    for (int k = 0; k <= N; ++k) row[k] *= inv;
   }
-  const double rem = 1.0 - s;
-  row[N] += (rem > 0.0 ? rem : 0.0);
 }
 
 void founding_vec(int N, double lam, int founding, std::vector<double>& cv) {

@@ -8,6 +8,17 @@ the growth advantage and the effective size, and reports projected
 frequencies, presence and exceedance probabilities, and posteriors over the
 introduction time and the founding time of the lineage that was detected.
 
+## Installation
+
+```r
+# install.packages("remotes")
+remotes::install_github("mrc-ide/genecastR", build_vignettes = TRUE)
+```
+
+`build_vignettes = TRUE` costs a few minutes and is worth it: without it the
+tutorials listed at the end are not installed and `vignette()` will not find
+them. Compilation needs a C++ toolchain, as below.
+
 ## Getting started
 
 Needs R >= 4.1 and a C++ compiler. No Fortran toolchain is required --

@@ -362,6 +362,15 @@ hierarchies over the growth advantage and the effective size, and
 reports projected frequencies, presence and exceedance probabilities,
 and posteriors over the introduction time and the founding time of the
 lineage that was detected.</p>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<pre class="r"><code># install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;mrc-ide/genecastR&quot;, build_vignettes = TRUE)</code></pre>
+<p><code>build_vignettes = TRUE</code> costs a few minutes and is worth
+it: without it the tutorials listed at the end are not installed and
+<code>vignette()</code> will not find them. Compilation needs a C++
+toolchain, as below.</p>
+</div>
 <div id="getting-started" class="section level2">
 <h2>Getting started</h2>
 <p>Needs R &gt;= 4.1 and a C++ compiler. No Fortran toolchain is
@@ -402,19 +411,11 @@ slower; phase 7 needs libomp from <a href="https://mac.r-project.org/openmp/" cl
 </div>
 <div id="tutorials" class="section level2">
 <h2>Tutorials</h2>
-<p>Start here for the applied workflow – what goes in, how to read what
-comes out, and the three questions a single fit answers:</p>
+<p>Start here for a quickstart:</p>
 <pre class="r"><code>vignette(&quot;GeneCastRQuickstart&quot;, package = &quot;GeneCastR&quot;)</code></pre>
-<p>Then, for the model itself, its parameterisation, the hierarchical
+<p>Then, for the the full model and parameterisation, the hierarchical
 options and the full list of settings:</p>
 <pre class="r"><code>vignette(&quot;GeneCastRTutorial&quot;, package = &quot;GeneCastR&quot;)</code></pre>
-<p>The introduction time carries its own vignette, because it is the one
-quantity the surveys never observe directly and the prior on it does
-real work. It covers per-deme arrival windows, what the data can and
-cannot say about the arrival law, and how to tell the prior’s
-contribution from the likelihood’s:</p>
-<pre class="r"><code>vignette(&quot;introduction-time&quot;, package = &quot;GeneCastR&quot;)</code></pre>
-<p><code>browseVignettes(&quot;GeneCastR&quot;)</code> lists them all.</p>
 </div>
 </div>
 

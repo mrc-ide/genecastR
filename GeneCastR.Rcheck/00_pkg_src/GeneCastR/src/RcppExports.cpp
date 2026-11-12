@@ -48,8 +48,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // gc_loglik_pt
-Rcpp::NumericVector gc_loglik_pt(Rcpp::IntegerVector Nlat, double alpha, Rcpp::NumericVector lambda, int T, Rcpp::List demes, int founding, double tstar_p);
-RcppExport SEXP _GeneCastR_gc_loglik_pt(SEXP NlatSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP TSEXP, SEXP demesSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP) {
+Rcpp::NumericVector gc_loglik_pt(Rcpp::IntegerVector Nlat, double alpha, Rcpp::NumericVector lambda, int T, Rcpp::List demes, int founding, double tstar_p, Rcpp::Nullable<Rcpp::NumericMatrix> tstar_logw);
+RcppExport SEXP _GeneCastR_gc_loglik_pt(SEXP NlatSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP TSEXP, SEXP demesSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP tstar_logwSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -60,13 +60,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type demes(demesSEXP);
     Rcpp::traits::input_parameter< int >::type founding(foundingSEXP);
     Rcpp::traits::input_parameter< double >::type tstar_p(tstar_pSEXP);
-    rcpp_result_gen = Rcpp::wrap(gc_loglik_pt(Nlat, alpha, lambda, T, demes, founding, tstar_p));
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type tstar_logw(tstar_logwSEXP);
+    rcpp_result_gen = Rcpp::wrap(gc_loglik_pt(Nlat, alpha, lambda, T, demes, founding, tstar_p, tstar_logw));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gc_tstar_negbin_logw
+Rcpp::NumericVector gc_tstar_negbin_logw(int T, int tmin, double mu, double r);
+RcppExport SEXP _GeneCastR_gc_tstar_negbin_logw(SEXP TSEXP, SEXP tminSEXP, SEXP muSEXP, SEXP rSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< int >::type tmin(tminSEXP);
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type r(rSEXP);
+    rcpp_result_gen = Rcpp::wrap(gc_tstar_negbin_logw(T, tmin, mu, r));
     return rcpp_result_gen;
 END_RCPP
 }
 // gc_tstar_pt
-Rcpp::NumericMatrix gc_tstar_pt(Rcpp::IntegerVector Nlat, double alpha, Rcpp::NumericVector lambda, int T, Rcpp::List demes, int founding, double tstar_p);
-RcppExport SEXP _GeneCastR_gc_tstar_pt(SEXP NlatSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP TSEXP, SEXP demesSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP) {
+Rcpp::NumericMatrix gc_tstar_pt(Rcpp::IntegerVector Nlat, double alpha, Rcpp::NumericVector lambda, int T, Rcpp::List demes, int founding, double tstar_p, Rcpp::Nullable<Rcpp::NumericMatrix> tstar_logw);
+RcppExport SEXP _GeneCastR_gc_tstar_pt(SEXP NlatSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP TSEXP, SEXP demesSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP tstar_logwSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,7 +92,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type demes(demesSEXP);
     Rcpp::traits::input_parameter< int >::type founding(foundingSEXP);
     Rcpp::traits::input_parameter< double >::type tstar_p(tstar_pSEXP);
-    rcpp_result_gen = Rcpp::wrap(gc_tstar_pt(Nlat, alpha, lambda, T, demes, founding, tstar_p));
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type tstar_logw(tstar_logwSEXP);
+    rcpp_result_gen = Rcpp::wrap(gc_tstar_pt(Nlat, alpha, lambda, T, demes, founding, tstar_p, tstar_logw));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -95,8 +111,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // gc_project_pt
-Rcpp::List gc_project_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U, Rcpp::NumericVector NU, int M, int T, int H, Rcpp::List demes, Rcpp::NumericVector thresholds, int nbins, int founding, double tstar_p);
-RcppExport SEXP _GeneCastR_gc_project_pt(SEXP ZSEXP, SEXP USEXP, SEXP NUSEXP, SEXP MSEXP, SEXP TSEXP, SEXP HSEXP, SEXP demesSEXP, SEXP thresholdsSEXP, SEXP nbinsSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP) {
+Rcpp::List gc_project_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U, Rcpp::NumericVector NU, int M, int T, int H, Rcpp::List demes, Rcpp::NumericVector thresholds, int nbins, int founding, double tstar_p, Rcpp::Nullable<Rcpp::NumericVector> tstar_haz);
+RcppExport SEXP _GeneCastR_gc_project_pt(SEXP ZSEXP, SEXP USEXP, SEXP NUSEXP, SEXP MSEXP, SEXP TSEXP, SEXP HSEXP, SEXP demesSEXP, SEXP thresholdsSEXP, SEXP nbinsSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP tstar_hazSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -111,13 +127,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type nbins(nbinsSEXP);
     Rcpp::traits::input_parameter< int >::type founding(foundingSEXP);
     Rcpp::traits::input_parameter< double >::type tstar_p(tstar_pSEXP);
-    rcpp_result_gen = Rcpp::wrap(gc_project_pt(Z, U, NU, M, T, H, demes, thresholds, nbins, founding, tstar_p));
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type tstar_haz(tstar_hazSEXP);
+    rcpp_result_gen = Rcpp::wrap(gc_project_pt(Z, U, NU, M, T, H, demes, thresholds, nbins, founding, tstar_p, tstar_haz));
     return rcpp_result_gen;
 END_RCPP
 }
 // gc_mwg_run
-Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm, Rcpp::NumericVector z0, double u0, double nu0, double step_z, double step_u, double step_nu, Rcpp::List prior, double target, int founding, double tstar_p, bool shared, int u_mode);
-RcppExport SEXP _GeneCastR_gc_mwg_run(SEXP demesSEXP, SEXP MSEXP, SEXP TSEXP, SEXP n_iterSEXP, SEXP warmSEXP, SEXP z0SEXP, SEXP u0SEXP, SEXP nu0SEXP, SEXP step_zSEXP, SEXP step_uSEXP, SEXP step_nuSEXP, SEXP priorSEXP, SEXP targetSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP sharedSEXP, SEXP u_modeSEXP) {
+Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm, Rcpp::NumericVector z0, double u0, double nu0, double step_z, double step_u, double step_nu, Rcpp::List prior, double target, int founding, double tstar_p, bool shared, int u_mode, bool tstar_negbin, Rcpp::IntegerVector tstar_tmin, Rcpp::NumericVector tstar_mu, double tstar_r0, double tstar_shape_rate, bool tstar_learn_shape, bool tstar_learn_mean, double tstar_mu0, double tstar_logmu_sd);
+RcppExport SEXP _GeneCastR_gc_mwg_run(SEXP demesSEXP, SEXP MSEXP, SEXP TSEXP, SEXP n_iterSEXP, SEXP warmSEXP, SEXP z0SEXP, SEXP u0SEXP, SEXP nu0SEXP, SEXP step_zSEXP, SEXP step_uSEXP, SEXP step_nuSEXP, SEXP priorSEXP, SEXP targetSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP sharedSEXP, SEXP u_modeSEXP, SEXP tstar_negbinSEXP, SEXP tstar_tminSEXP, SEXP tstar_muSEXP, SEXP tstar_r0SEXP, SEXP tstar_shape_rateSEXP, SEXP tstar_learn_shapeSEXP, SEXP tstar_learn_meanSEXP, SEXP tstar_mu0SEXP, SEXP tstar_logmu_sdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -138,13 +155,22 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type tstar_p(tstar_pSEXP);
     Rcpp::traits::input_parameter< bool >::type shared(sharedSEXP);
     Rcpp::traits::input_parameter< int >::type u_mode(u_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(gc_mwg_run(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode));
+    Rcpp::traits::input_parameter< bool >::type tstar_negbin(tstar_negbinSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type tstar_tmin(tstar_tminSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type tstar_mu(tstar_muSEXP);
+    Rcpp::traits::input_parameter< double >::type tstar_r0(tstar_r0SEXP);
+    Rcpp::traits::input_parameter< double >::type tstar_shape_rate(tstar_shape_rateSEXP);
+    Rcpp::traits::input_parameter< bool >::type tstar_learn_shape(tstar_learn_shapeSEXP);
+    Rcpp::traits::input_parameter< bool >::type tstar_learn_mean(tstar_learn_meanSEXP);
+    Rcpp::traits::input_parameter< double >::type tstar_mu0(tstar_mu0SEXP);
+    Rcpp::traits::input_parameter< double >::type tstar_logmu_sd(tstar_logmu_sdSEXP);
+    rcpp_result_gen = Rcpp::wrap(gc_mwg_run(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode, tstar_negbin, tstar_tmin, tstar_mu, tstar_r0, tstar_shape_rate, tstar_learn_shape, tstar_learn_mean, tstar_mu0, tstar_logmu_sd));
     return rcpp_result_gen;
 END_RCPP
 }
 // gc_times_pt
-Rcpp::List gc_times_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U, Rcpp::NumericVector NU, int M, int T, Rcpp::List demes, int n_paths, bool joint, int founding, double tstar_p);
-RcppExport SEXP _GeneCastR_gc_times_pt(SEXP ZSEXP, SEXP USEXP, SEXP NUSEXP, SEXP MSEXP, SEXP TSEXP, SEXP demesSEXP, SEXP n_pathsSEXP, SEXP jointSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP) {
+Rcpp::List gc_times_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U, Rcpp::NumericVector NU, int M, int T, Rcpp::List demes, int n_paths, bool joint, int founding, double tstar_p, Rcpp::Nullable<Rcpp::NumericVector> tstar_haz);
+RcppExport SEXP _GeneCastR_gc_times_pt(SEXP ZSEXP, SEXP USEXP, SEXP NUSEXP, SEXP MSEXP, SEXP TSEXP, SEXP demesSEXP, SEXP n_pathsSEXP, SEXP jointSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP tstar_hazSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -158,7 +184,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type joint(jointSEXP);
     Rcpp::traits::input_parameter< int >::type founding(foundingSEXP);
     Rcpp::traits::input_parameter< double >::type tstar_p(tstar_pSEXP);
-    rcpp_result_gen = Rcpp::wrap(gc_times_pt(Z, U, NU, M, T, demes, n_paths, joint, founding, tstar_p));
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type tstar_haz(tstar_hazSEXP);
+    rcpp_result_gen = Rcpp::wrap(gc_times_pt(Z, U, NU, M, T, demes, n_paths, joint, founding, tstar_p, tstar_haz));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -177,12 +204,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_GeneCastR_gc_kernel", (DL_FUNC) &_GeneCastR_gc_kernel, 2},
     {"_GeneCastR_gc_poisson_row", (DL_FUNC) &_GeneCastR_gc_poisson_row, 2},
     {"_GeneCastR_gc_emission", (DL_FUNC) &_GeneCastR_gc_emission, 3},
-    {"_GeneCastR_gc_loglik_pt", (DL_FUNC) &_GeneCastR_gc_loglik_pt, 7},
-    {"_GeneCastR_gc_tstar_pt", (DL_FUNC) &_GeneCastR_gc_tstar_pt, 7},
+    {"_GeneCastR_gc_loglik_pt", (DL_FUNC) &_GeneCastR_gc_loglik_pt, 8},
+    {"_GeneCastR_gc_tstar_negbin_logw", (DL_FUNC) &_GeneCastR_gc_tstar_negbin_logw, 4},
+    {"_GeneCastR_gc_tstar_pt", (DL_FUNC) &_GeneCastR_gc_tstar_pt, 8},
     {"_GeneCastR_gc_band_stats", (DL_FUNC) &_GeneCastR_gc_band_stats, 3},
-    {"_GeneCastR_gc_project_pt", (DL_FUNC) &_GeneCastR_gc_project_pt, 11},
-    {"_GeneCastR_gc_mwg_run", (DL_FUNC) &_GeneCastR_gc_mwg_run, 17},
-    {"_GeneCastR_gc_times_pt", (DL_FUNC) &_GeneCastR_gc_times_pt, 10},
+    {"_GeneCastR_gc_project_pt", (DL_FUNC) &_GeneCastR_gc_project_pt, 12},
+    {"_GeneCastR_gc_mwg_run", (DL_FUNC) &_GeneCastR_gc_mwg_run, 26},
+    {"_GeneCastR_gc_times_pt", (DL_FUNC) &_GeneCastR_gc_times_pt, 11},
     {"_GeneCastR_gc_toolchain", (DL_FUNC) &_GeneCastR_gc_toolchain, 0},
     {NULL, NULL, 0}
 };

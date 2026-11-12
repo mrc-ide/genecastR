@@ -4,7 +4,16 @@
 \alias{gc_tstar_pt}
 \title{Posterior over the introduction time, for one parameter draw}
 \usage{
-gc_tstar_pt(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p = -1)
+gc_tstar_pt(
+  Nlat,
+  alpha,
+  lambda,
+  T,
+  demes,
+  founding = 0L,
+  tstar_p = -1,
+  tstar_logw = NULL
+)
 }
 \arguments{
 \item{Nlat}{Integer vector of lattice sizes, one per deme.}

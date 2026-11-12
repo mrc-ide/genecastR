@@ -434,12 +434,12 @@ gc_example_fit <- function() {
   readRDS(f)
 }
 
-#' The stored fits the introduction-time vignette shows
+#' Stored fits under the negative binomial prior on `t*`
 #'
-#' Two fits to [gc_example_data()] under the negative binomial prior on
-#' `t*`: one with a single prior for the panel, one with `tstar_min` and
-#' `tstar_mean` differing by deme. Both carry a projection computed at
-#' `n_draws = 400`, `n_paths = 400`.
+#' Two fits to [gc_example_data()]: `panel`, with one arrival prior for the
+#' whole panel, which is the fit the tutorials show; and `deme`, with
+#' `tstar_min` and `tstar_mean` differing by deme. Both carry a projection
+#' computed at `n_draws = 400`, `n_paths = 400`.
 #'
 #' The per-deme values are **illustrative**. They are not surveillance dates
 #' or published estimates; they stand in for the kind of per-deme knowledge a
@@ -447,7 +447,7 @@ gc_example_fit <- function() {
 #'
 #' @return A list with `panel` and `deme`, each holding a `fit` and a `pr`,
 #'   plus the `tmin` and `tmean` vectors the per-deme fit used.
-#' @seealso [gc_example_fit()] for the fit the main vignette shows.
+#' @seealso [gc_example_fit()] for a fit under the geometric prior.
 #' @export
 gc_example_tstar_fit <- function() {
   f <- system.file("extdata", "tstar_fit.rds", package = "GeneCastR")

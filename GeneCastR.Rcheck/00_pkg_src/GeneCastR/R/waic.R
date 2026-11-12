@@ -38,20 +38,30 @@ gc_waic <- function(fit, n_draws = 500L) {
   th <- if (geom) as.numeric(m[idx, "theta"]) else rep(NA_real_, length(idx))
   fc <- .founding_code(if (is.null(fnd)) "conditional" else fnd)
   ddat <- d$deme_data()
+  ## WAIC must score the model that was fitted, so the t* prior each draw
+  ## carried has to be rebuilt here too, not left at the default
+  nb <- identical(fit$control$tstar, "negbin")
+  tset <- if (nb) .tstar_setup(fit$control, d) else NULL
+  sh <- if (nb) as.numeric(m[idx, "tstar_shape"]) else rep(NA_real_, length(idx))
+  mo <- if (nb && tset$learn_mean)
+    as.numeric(m[idx, "tstar_mean_offset"]) * d$M else NULL
 
   LL <- matrix(NA_real_, length(idx), D)
   for (i in seq_along(idx)) {
     tp <- if (geom) -expm1(-th[i] / d$M) else -1
+    lwi <- if (nb) .tstar_logw(tset, d$T, sh[i],
+                               if (is.null(mo)) NULL else mo[i]) else NULL
     ## gc_loglik_pt takes one alpha, so a per-deme fit needs one call per
     ## deme; the shared case still does all D in a single call
     LL[i, ] <- if (perd)
       vapply(seq_len(D), function(k)
         gc_loglik_pt(gc_nlat(Z[i, k], d$M), gc_alpha(U[i, k], d$M),
-                     gc_lambda(nn[i], exp(Z[i, k])), d$T, ddat[k], fc, tp),
+                     gc_lambda(nn[i], exp(Z[i, k])), d$T, ddat[k], fc, tp,
+                     if (is.null(lwi)) NULL else lwi[, k, drop = FALSE]),
         numeric(1L))
     else
       gc_loglik_pt(gc_nlat(Z[i, ], d$M), gc_alpha(U[i, 1L], d$M),
-                   gc_lambda(nn[i], exp(Z[i, ])), d$T, ddat, fc, tp)
+                   gc_lambda(nn[i], exp(Z[i, ])), d$T, ddat, fc, tp, lwi)
   }
 
   lse <- function(v) { mx <- max(v); mx + log(sum(exp(v - mx))) }

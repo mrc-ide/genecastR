@@ -18,12 +18,12 @@ test_that("the sampler returns the documented shape", {
                   step_z = 0.9, step_u = 0.25, step_nu = 0.6,
                   prior = pr(), target = 0.3)
   ## layout: D effective sizes, then u / mu / log_sigma2 / nu / theta, then
-  ## D per-deme u, then mu_u and sigma_u.  The columns a given run does not
-  ## use are NA rather than absent, so the shape does not depend on the
-  ## control settings.
-  expect_equal(dim(r$draws), c(60L, 2L * 3L + 7L))
-  expect_named(r$accept, c("z", "u", "nu", "theta"))
-  expect_named(r$steps, c("z", "u", "nu", "theta"))
+  ## D per-deme u, then mu_u, sigma_u, and the t* shape and mean offset.  The
+  ## columns a given run does not use are NA rather than absent, so this
+  ## matrix does not change width with the control settings.
+  expect_equal(dim(r$draws), c(60L, 2L * 3L + 9L))
+  expect_named(r$accept, c("z", "u", "nu", "theta", "shape", "mean"))
+  expect_named(r$steps, c("z", "u", "nu", "theta", "shape", "mean"))
   expect_true(all(is.finite(r$draws[, seq_len(7L)])))
   expect_true(all(is.na(r$draws[, 8L])))      # theta: t* is uniform here
   expect_true(all(is.na(r$draws[, 12L:13L]))) # mu_u, sigma_u: A is shared
@@ -100,7 +100,8 @@ test_that("GCFit assembles draws on the reported scales", {
   ## `sigma` is a parameter only when the sizes are hierarchical, which is
   ## not the default, so this asks for it explicitly
   fit <- GCFit$new(d, chains = 2L, iter = 90L, warmup = 30L, seed = 3L,
-                   control = gc_control(neff = "hierarchical"), quiet = TRUE)
+                   control = gc_control(neff = "hierarchical",
+                                        tstar = "geometric"), quiet = TRUE)
   expect_s3_class(fit$draws, "draws_array")
   expect_equal(posterior::ndraws(fit$draws), 120L)
   expect_equal(posterior::nchains(fit$draws), 2L)

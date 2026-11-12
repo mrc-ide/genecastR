@@ -6,12 +6,12 @@
     GNU Fortran (GCC) 14.2.0
 * running under: macOS Golden Gate 27.2
 * using session charset: UTF-8
-* current time: 2026-11-11 11:15:41 UTC
+* current time: 2026-11-12 11:32:51 UTC
 * using options ‘--no-manual --as-cran’
 * checking for file ‘GeneCastR/DESCRIPTION’ ... OK
 * this is package ‘GeneCastR’ version ‘0.0.0.9000’
 * package encoding: UTF-8
-* checking CRAN incoming feasibility ... [1s/11s] NOTE
+* checking CRAN incoming feasibility ... NOTE
 Maintainer: ‘Michael Whitehouse <michael.whitehouse@imperial.ac.uk>’
 
 New submission
@@ -25,7 +25,7 @@ Version contains large components (0.0.0.9000)
 * checking for hidden files and directories ... OK
 * checking for portable file names ... OK
 * checking for sufficient/correct file permissions ... OK
-* checking whether package ‘GeneCastR’ can be installed ... [8s/15s] OK
+* checking whether package ‘GeneCastR’ can be installed ... OK
 * used C++ compiler: ‘Apple clang version 21.0.0 (clang-2100.3.34.2)’
 * used SDK: ‘MacOSX27.0.sdk’
 * checking installed package size ... OK
@@ -35,6 +35,8 @@ Version contains large components (0.0.0.9000)
 * checking DESCRIPTION meta-information ... OK
 * checking top-level files ... NOTE
 Files ‘README.md’ or ‘NEWS.md’ cannot be checked without ‘pandoc’ being installed.
+Non-standard file/directory found at top level:
+  ‘README.html’
 * checking for left-over files ... OK
 * checking index information ... OK
 * checking package subdirectories ... OK
@@ -73,14 +75,6 @@ Files ‘README.md’ or ‘NEWS.md’ cannot be checked without ‘pandoc’ be
 * checking installed files from ‘inst/doc’ ... OK
 * checking files in ‘vignettes’ ... OK
 * checking examples ... OK
-* checking examples with --run-donttest ... [38s/38s] OK
+* checking examples with --run-donttest ... [26s/26s] OK
 * checking for unstated dependencies in ‘tests’ ... OK
-* checking tests ... [89s/90s] OK
-  Running ‘testthat.R’ [89s/90s]
-* checking for unstated dependencies in vignettes ... OK
-* checking package vignettes ... OK
-* checking re-building of vignette outputs ... OK
-* checking for non-standard things in the check directory ... OK
-* checking for detritus in the temp directory ... OK
-* DONE
-Status: 2 NOTEs
+* checking tests ...

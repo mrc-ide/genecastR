@@ -60,13 +60,27 @@ Rcpp::List gc_times_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U,
                        Rcpp::NumericVector NU, int M, int T,
                        Rcpp::List demes, int n_paths,
                        bool joint = false, int founding = 0,
-                       double tstar_p = -1.0) {
+                       double tstar_p = -1.0,
+                       Rcpp::Nullable<Rcpp::NumericVector> tstar_haz
+                         = R_NilValue) {
   const int D = demes.size();
   const int R = Z.nrow();
   if (Z.ncol() != D) Rcpp::stop("Z must have one column per deme");
   if (U.size() != R || NU.size() != R)
     Rcpp::stop("U and NU must have one entry per row of Z");
   if (T < 1 || n_paths < 1) Rcpp::stop("bad T or n_paths");
+
+  // T x D x R, per draw for the same reason the projection is
+  const bool have_hz = tstar_haz.isNotNull();
+  Rcpp::NumericVector HZ = have_hz ? Rcpp::NumericVector(tstar_haz.get())
+                                   : Rcpp::NumericVector(0);
+  if (have_hz) {
+    Rcpp::IntegerVector dm = HZ.attr("dim");
+    if (dm.size() != 3 || dm[0] < T || dm[1] != D || dm[2] != R)
+      Rcpp::stop("tstar_haz must be T x D x nrow(Z)");
+  }
+  const std::size_t HZS = have_hz
+    ? (std::size_t)Rcpp::as<Rcpp::IntegerVector>(HZ.attr("dim"))[0] : 0;
 
   std::vector<DemeObs> obs((std::size_t)D);
   for (int d = 0; d < D; ++d) {
@@ -129,7 +143,10 @@ Rcpp::List gc_times_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U,
           emission_fill(N, obs[d].x[j], obs[d].n[j], &E[(std::size_t)j * SL]);
         }
 
-      tstar_hazard(T, tstar_p, h);
+      if (have_hz) {
+        const double* hp = &HZ[HZS * ((std::size_t)d + (std::size_t)D * r)];
+        h.assign(hp, hp + T);
+      } else tstar_hazard(T, tstar_p, h);
 
       // ---- forward filter ------------------------------------------------
       A.assign((std::size_t)(T + 1) * S, 0.0);

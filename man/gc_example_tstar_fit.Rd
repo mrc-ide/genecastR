@@ -2,7 +2,7 @@
 % Please edit documentation in R/GCData.R
 \name{gc_example_tstar_fit}
 \alias{gc_example_tstar_fit}
-\title{The stored fits the introduction-time vignette shows}
+\title{Stored fits under the negative binomial prior on \verb{t*}}
 \usage{
 gc_example_tstar_fit()
 }
@@ -11,10 +11,10 @@ A list with \code{panel} and \code{deme}, each holding a \code{fit} and a \code{
 plus the \code{tmin} and \code{tmean} vectors the per-deme fit used.
 }
 \description{
-Two fits to \code{\link[=gc_example_data]{gc_example_data()}} under the negative binomial prior on
-\verb{t*}: one with a single prior for the panel, one with \code{tstar_min} and
-\code{tstar_mean} differing by deme. Both carry a projection computed at
-\code{n_draws = 400}, \code{n_paths = 400}.
+Two fits to \code{\link[=gc_example_data]{gc_example_data()}}: \code{panel}, with one arrival prior for the
+whole panel, which is the fit the tutorials show; and \code{deme}, with
+\code{tstar_min} and \code{tstar_mean} differing by deme. Both carry a projection
+computed at \code{n_draws = 400}, \code{n_paths = 400}.
 }
 \details{
 The per-deme values are \strong{illustrative}. They are not surveillance dates
@@ -22,5 +22,5 @@ or published estimates; they stand in for the kind of per-deme knowledge a
 programme might hold.
 }
 \seealso{
-\code{\link[=gc_example_fit]{gc_example_fit()}} for the fit the main vignette shows.
+\code{\link[=gc_example_fit]{gc_example_fit()}} for a fit under the geometric prior.
 }

@@ -21,7 +21,16 @@ gc_mwg_run(
   founding = 0L,
   tstar_p = -1,
   shared = FALSE,
-  u_mode = 0L
+  u_mode = 0L,
+  tstar_negbin = FALSE,
+  tstar_tmin = as.integer(c()),
+  tstar_mu = as.numeric(c()),
+  tstar_r0 = 1,
+  tstar_shape_rate = 1,
+  tstar_learn_shape = TRUE,
+  tstar_learn_mean = FALSE,
+  tstar_mu0 = 0,
+  tstar_logmu_sd = 0.5
 )
 }
 \arguments{

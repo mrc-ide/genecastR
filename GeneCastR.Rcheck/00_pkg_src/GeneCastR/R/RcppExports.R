@@ -55,8 +55,28 @@ gc_emission <- function(N, x, n) {
 #'   and integrated out.
 #' @keywords internal
 #' @export
-gc_loglik_pt <- function(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p = -1.0) {
-    .Call(`_GeneCastR_gc_loglik_pt`, Nlat, alpha, lambda, T, demes, founding, tstar_p)
+gc_loglik_pt <- function(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p = -1.0, tstar_logw = NULL) {
+    .Call(`_GeneCastR_gc_loglik_pt`, Nlat, alpha, lambda, T, demes, founding, tstar_p, tstar_logw)
+}
+
+#' Log-weights for a shifted negative binomial introduction time
+#'
+#' `t* = tmin + NegBin(mu, r)` in steps, with `mu` the mean of the offset
+#' and `r` its size, so `Var = mu + mu^2/r`. `r = 1` is the geometric, and
+#' as `r` grows the law tends to Poisson. Because the backward pass never
+#' sees the prior, these weights are all that distinguishes one law on `t*`
+#' from another.
+#'
+#' @param T Number of lattice steps.
+#' @param tmin Earliest step the arrival may fall on, at least 1.
+#' @param mu Mean of the offset from `tmin`, in steps.
+#' @param r Size of the negative binomial; `1` gives the geometric.
+#' @return `T + 1` log-weights: `log p(t* = t)` for `t = 1..T`, then
+#'   `log p(t* > T)`.
+#' @keywords internal
+#' @export
+gc_tstar_negbin_logw <- function(T, tmin, mu, r) {
+    .Call(`_GeneCastR_gc_tstar_negbin_logw`, T, tmin, mu, r)
 }
 
 #' Posterior over the introduction time, for one parameter draw
@@ -72,8 +92,8 @@ gc_loglik_pt <- function(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p =
 #'   The row sums to one. Under the uniform prior that last column is zero.
 #' @keywords internal
 #' @export
-gc_tstar_pt <- function(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p = -1.0) {
-    .Call(`_GeneCastR_gc_tstar_pt`, Nlat, alpha, lambda, T, demes, founding, tstar_p)
+gc_tstar_pt <- function(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p = -1.0, tstar_logw = NULL) {
+    .Call(`_GeneCastR_gc_tstar_pt`, Nlat, alpha, lambda, T, demes, founding, tstar_p, tstar_logw)
 }
 
 #' Banded kernel statistics
@@ -111,8 +131,8 @@ gc_band_stats <- function(N, alpha, lambda) {
 #'   zero) and `exceed`.
 #' @keywords internal
 #' @export
-gc_project_pt <- function(Z, U, NU, M, T, H, demes, thresholds, nbins, founding = 0L, tstar_p = -1.0) {
-    .Call(`_GeneCastR_gc_project_pt`, Z, U, NU, M, T, H, demes, thresholds, nbins, founding, tstar_p)
+gc_project_pt <- function(Z, U, NU, M, T, H, demes, thresholds, nbins, founding = 0L, tstar_p = -1.0, tstar_haz = NULL) {
+    .Call(`_GeneCastR_gc_project_pt`, Z, U, NU, M, T, H, demes, thresholds, nbins, founding, tstar_p, tstar_haz)
 }
 
 #' Blocked Metropolis-within-Gibbs for the Poisson model with t*
@@ -133,8 +153,8 @@ gc_project_pt <- function(Z, U, NU, M, T, H, demes, thresholds, nbins, founding 
 #'   was evaluated.
 #' @keywords internal
 #' @export
-gc_mwg_run <- function(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding = 0L, tstar_p = -1.0, shared = FALSE, u_mode = 0L) {
-    .Call(`_GeneCastR_gc_mwg_run`, demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode)
+gc_mwg_run <- function(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding = 0L, tstar_p = -1.0, shared = FALSE, u_mode = 0L, tstar_negbin = FALSE, tstar_tmin = as.integer( c()), tstar_mu = as.numeric( c()), tstar_r0 = 1.0, tstar_shape_rate = 1.0, tstar_learn_shape = TRUE, tstar_learn_mean = FALSE, tstar_mu0 = 0.0, tstar_logmu_sd = 0.5) {
+    .Call(`_GeneCastR_gc_mwg_run`, demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode, tstar_negbin, tstar_tmin, tstar_mu, tstar_r0, tstar_shape_rate, tstar_learn_shape, tstar_learn_mean, tstar_mu0, tstar_logmu_sd)
 }
 
 #' Introduction and establishment times, from sampled paths
@@ -164,8 +184,8 @@ gc_mwg_run <- function(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, s
 #'   lineage present at `T` is the one that originally arrived.
 #' @keywords internal
 #' @export
-gc_times_pt <- function(Z, U, NU, M, T, demes, n_paths, joint = FALSE, founding = 0L, tstar_p = -1.0) {
-    .Call(`_GeneCastR_gc_times_pt`, Z, U, NU, M, T, demes, n_paths, joint, founding, tstar_p)
+gc_times_pt <- function(Z, U, NU, M, T, demes, n_paths, joint = FALSE, founding = 0L, tstar_p = -1.0, tstar_haz = NULL) {
+    .Call(`_GeneCastR_gc_times_pt`, Z, U, NU, M, T, demes, n_paths, joint, founding, tstar_p, tstar_haz)
 }
 
 #' Report the compiled toolchain

@@ -19,15 +19,3 @@ Type 'q()' to quit R.
 > library(GeneCastR)
 > 
 > test_check("GeneCastR")
-chain 1/1 ...
-[ FAIL 0 | WARN 0 | SKIP 1 | PASS 822 ]
-
-══ Skipped tests (1) ═══════════════════════════════════════════════════════════
-• built without OpenMP; the per-deme loop will run serially (1):
-  'test-toolchain.R:7:5'
-
-[ FAIL 0 | WARN 0 | SKIP 1 | PASS 822 ]
-> 
-> proc.time()
-   user  system elapsed 
- 88.061   0.705  89.667 

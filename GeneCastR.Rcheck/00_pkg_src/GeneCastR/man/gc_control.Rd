@@ -9,7 +9,13 @@ gc_control(
   founding = c("conditional", "one", "rate"),
   neff = c("shared", "hierarchical"),
   selection = c("shared", "hierarchical"),
-  tstar = c("geometric", "uniform"),
+  tstar = c("negbin", "geometric", "uniform"),
+  tstar_min = NULL,
+  tstar_mean = NULL,
+  tstar_learn = c("shape", "both", "none"),
+  tstar_shape = 1,
+  tstar_shape_rate = 1,
+  tstar_logmean_sd = 0.5,
   tstar_rate = NULL,
   lntheta_bounds = c(-8, 3),
   u_bounds = c(-4, 4),
@@ -67,13 +73,58 @@ can collapse back onto a single advantage. Both share the transform
 \code{alpha = exp(u/M) - 1}. Under the hierarchy the reported \code{u} and \code{A} are
 panel averages and the per-deme values are \code{u[deme]} and \code{A[deme]}.}
 
-\item{tstar}{Prior on the introduction time. \code{"geometric"}, the default,
+\item{tstar}{Prior on the introduction time. \code{"negbin"}, the default,
+makes \verb{t* = tstar_min + NegBin(mean, shape)} in steps: a hard earliest
+date, then an overdispersed wait. \code{"geometric"}
 gives founding a constant hazard \code{theta} per unit time, so \verb{P(t* > T)}
 is positive and learned: a deme can simply not have been reached yet.
+\code{"negbin"} with \code{shape = 1} and a learnt mean \emph{is} the geometric, so the
+two nest.
 \code{"uniform"} spreads \verb{t*} over the observation window instead, under
 which the deme is founded inside the record with probability one -- a
 deme never seen positive must then have been reached and then hidden or
 extinguished, which is rarely what anyone means.}
+
+\item{tstar_min, tstar_mean}{Earliest possible arrival, and the mean of
+\verb{t*}, both in the units of the \code{time} column rather than in steps --
+which is what keeps the prior invariant to \code{M}. Each takes a single
+value for the whole panel, or a vector named by deme for per-deme
+prior knowledge; \link{GCFit} checks the names against the data and refuses
+a \code{tstar_min} that falls before \code{t0} or after a deme's first non-zero
+survey. \code{tstar_min} defaults to \code{t0}. \code{tstar_mean} defaults to
+\code{tstar_min + span/log(2)}, which puts the median arrival exactly at the
+end of the record when the shape is one, whatever the span and whatever
+\code{M} -- the nearest a fixed mean comes to having no opinion.}
+
+\item{tstar_learn}{What the data may move. \code{"shape"}, the default, holds
+the mean at what you asked for and learns the dispersion. \code{"both"} also
+learns a single mean for the panel, centred on \code{tstar_mean} with spread
+\code{tstar_logmean_sd}; per-deme means are a fixed statement of prior
+knowledge, so they are not learnt deme by deme. \code{"none"} freezes both,
+and \verb{t*} then has no free parameters: \code{tstar_shape} and
+\code{p_beyond_baseline} are settings rather than posteriors and are not
+reported among the draws.}
+
+\item{tstar_shape}{The negative binomial size: \code{Var = mu + mu^2/shape},
+and the limit as \code{M} grows is a shifted \code{Gamma} of that shape. One is
+the geometric; above one the mode moves off \code{tstar_min}. \strong{Constrained
+to be at least one.} Below one the law collapses onto \code{tstar_min} --
+\verb{dnbinom(0; r, mu)} tends to one as \code{r} tends to zero -- putting an atom
+at the bound whose size grows as the mean is brought closer to it and
+which, as a density, grows with \code{M}. That is the only part of this
+parameterisation that is not resolution-invariant, so it is excluded.
+Learnt unless \code{tstar_learn = "none"}, in which case this is the value
+used.}
+
+\item{tstar_shape_rate}{Rate of the \code{Exponential} prior on
+\code{tstar_shape - 1}, so the shape has prior mean \code{1 + 1/rate} and the
+geometric sits at the edge of the support.}
+
+\item{tstar_logmean_sd}{Spread of the lognormal prior on the mean, when it
+is learnt. Note that a fixed mean caps \verb{P(t* > T)}: the shape alone
+cannot push arrival past the record if the mean says it arrived well
+inside it, and the map from shape to that tail is not monotone, so it is
+not a reparameterisation of it.}
 
 \item{tstar_rate}{Rate of the \code{Exponential} prior on \code{theta}. The default,
 \code{NULL}, uses the span of the observation window in units of the \code{time}

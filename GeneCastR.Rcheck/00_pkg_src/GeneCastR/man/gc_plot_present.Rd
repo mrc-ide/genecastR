@@ -4,14 +4,30 @@
 \alias{gc_plot_present}
 \title{Presence probability}
 \usage{
-gc_plot_present(pr, demes = NULL, bands = TRUE, order = "name", ncol = 4L)
+gc_plot_present(
+  pr,
+  demes = NULL,
+  bands = FALSE,
+  highlight = 0.8,
+  order = "name",
+  ncol = 4L
+)
 }
 \arguments{
 \item{pr}{A \link{GCProjection}.}
 
 \item{demes}{Demes to show; \code{NULL} for all.}
 
-\item{bands}{Draw the across-draw quantiles behind the mean.}
+\item{bands}{Draw the across-draw quantiles behind the mean. Off by
+default: they say how well the data pin the probability rather than how
+uncertain the outcome is, and three overlapping fills are hard to read
+at once.}
+
+\item{highlight}{Shade the stretches where presence exceeds this
+probability, or \code{NULL} for none. The comparison is against the mean, so
+a shaded stretch reads as "probably present" rather than "confidently
+probably present" -- for the stricter reading, pass \code{bands = TRUE} and
+look at where the lower edge sits.}
 
 \item{order}{Facet order; see \link{gc_plot_frequency}.}
 

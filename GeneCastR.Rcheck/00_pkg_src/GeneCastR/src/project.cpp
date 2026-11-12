@@ -30,7 +30,8 @@ static const double TINY = 1e-300;
 // sum_k gam[t][k] + gp[t] == 1.
 static void smooth_pt(const Banded& B, int N, int T, const DemeObs& o,
                       const std::vector<double>& cv, double tstar_p,
-                      std::vector<double>& gam, std::vector<double>& gp) {
+                      std::vector<double>& gam, std::vector<double>& gp,
+                      const double* hz = 0) {
   const std::size_t S = (std::size_t)N + 1;
 
   // emissions by step
@@ -44,8 +45,10 @@ static void smooth_pt(const Banded& B, int N, int T, const DemeObs& o,
     }
   }
 
+  // A supplied hazard carries whatever law on t* the caller chose; the
+  // scalar forms are the geometric and the uniform.
   std::vector<double> h;
-  tstar_hazard(T, tstar_p, h);
+  if (hz) h.assign(hz, hz + T); else tstar_hazard(T, tstar_p, h);
 
   // ---- forward: predictive alpha^- and the absent mass ------------------
   std::vector<double> A((std::size_t)T * S), W((std::size_t)T);
@@ -140,7 +143,9 @@ Rcpp::List gc_project_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U,
                          Rcpp::NumericVector NU, int M, int T, int H,
                          Rcpp::List demes, Rcpp::NumericVector thresholds,
                          int nbins, int founding = 0,
-                         double tstar_p = -1.0) {
+                         double tstar_p = -1.0,
+                         Rcpp::Nullable<Rcpp::NumericVector> tstar_haz
+                           = R_NilValue) {
   const int D = demes.size();
   const int R = Z.nrow();
   const int TH = T + H;
@@ -149,6 +154,24 @@ Rcpp::List gc_project_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U,
   if (U.size() != R || NU.size() != R)
     Rcpp::stop("U and NU must have one entry per row of Z");
   if (T < 1 || H < 0 || nbins < 1) Rcpp::stop("bad T, H or nbins");
+
+  // (T + H) x D x R.  Per draw, not one law for the whole sweep: the
+  // founding hazard is a function of the parameters, so collapsing it to a
+  // posterior median while every other parameter varies would leave the
+  // projection integrated over some of the posterior and not the rest.
+  const bool have_hz = tstar_haz.isNotNull();
+  Rcpp::NumericVector HZ = have_hz ? Rcpp::NumericVector(tstar_haz.get())
+                                   : Rcpp::NumericVector(0);
+  if (have_hz) {
+    Rcpp::IntegerVector dm = HZ.attr("dim");
+    if (dm.size() != 3 || dm[0] < TH || dm[1] != D || dm[2] != R)
+      Rcpp::stop("tstar_haz must be (T + H) x D x nrow(Z)");
+  }
+  const std::size_t HZS = have_hz
+    ? (std::size_t)Rcpp::as<Rcpp::IntegerVector>(HZ.attr("dim"))[0] : 0;
+  auto hzp = [&](int r, int d) -> const double* {
+    return have_hz ? &HZ[HZS * ((std::size_t)d + (std::size_t)D * r)] : 0;
+  };
 
   std::vector<DemeObs> obs((std::size_t)D);
   for (int d = 0; d < D; ++d) {
@@ -181,7 +204,7 @@ Rcpp::List gc_project_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U,
       banded_build(N, alpha, lam, B);
       std::vector<double> cv;
       founding_vec(N, lam, founding, cv);
-      smooth_pt(B, N, T, obs[d], cv, tstar_p, gam, gp);
+      smooth_pt(B, N, T, obs[d], cv, tstar_p, gam, gp, hzp(r, d));
 
       // in-window
       for (int t = 0; t < T; ++t) {
@@ -216,8 +239,11 @@ Rcpp::List gc_project_pt(Rcpp::NumericMatrix Z, Rcpp::NumericVector U,
       p.assign(&gam[(std::size_t)(T - 1) * S], &gam[(std::size_t)T * S]);
       np.assign(S, 0.0);
       double w_un = gp[T - 1];
-      const double hz = (tstar_p > 0.0) ? tstar_p : 0.0;
       for (int hh = 0; hh < H; ++hh) {
+        // the hazard has to continue past the record, so a supplied one must
+        // reach T + H: a time-varying law does not repeat its last value
+        const double hz = have_hz ? hzp(r, d)[T + hh]
+                                  : ((tstar_p > 0.0) ? tstar_p : 0.0);
         banded_tmv(B, p.data(), np.data());
         const double inj = w_un * hz;
         w_un -= inj;

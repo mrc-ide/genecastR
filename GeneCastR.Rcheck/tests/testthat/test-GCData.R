@@ -172,3 +172,49 @@ test_that("M is a resolution knob: it changes steps, not the panel", {
   expect_equal(unname(b$cut), unname(2L * a$cut))
   expect_equal(a$surveys$x, b$surveys$x)
 })
+
+## ---- dates become decimal years ------------------------------------------
+
+test_that("a Date time column becomes a decimal year, not days since 1970", {
+  mk <- function(tt, ...) GCData$new(data.frame(
+    deme = rep(c("a", "b"), each = 3L), time = rep(tt, 2L),
+    x = c(0L, 1L, 2L, 0L, 0L, 1L), n = rep(30L, 6L)), ...)
+  d <- mk(as.Date(c("2016-01-01", "2017-01-01", "2018-01-01")), M = 4L,
+          quiet = TRUE)
+  expect_equal(sort(unique(d$surveys$time)), c(2016, 2017, 2018))
+  ## as.numeric() would have given 16801, 17167, 17532
+  expect_false(any(d$surveys$time > 1e4))
+  expect_message(mk(as.Date(c("2016-01-01", "2017-01-01", "2018-01-01")),
+                    M = 4L), "decimal years")
+})
+
+test_that("the fraction is measured against each year's own length", {
+  one <- function(s, ...) GCData$new(
+    data.frame(deme = "a", time = as.Date(s), x = 0L, n = 30L),
+    M = 1L, snap = TRUE, quiet = TRUE)$surveys$time
+  ## 2016 is a leap year, so July 1 is day 182 rather than 181
+  expect_equal(one("2016-07-01"), 2016 + 182 / 366)
+  expect_equal(one("2017-07-01"), 2017 + 181 / 365)
+  expect_equal(one("2020-12-31"), 2020 + 365 / 366)
+  ## and the elapsed time between two dates is right
+  expect_equal(one("2017-01-01") - one("2016-01-01"), 1)
+})
+
+test_that("POSIXct is converted too", {
+  d <- GCData$new(data.frame(deme = rep("a", 2L),
+                             time = as.POSIXct(c("2016-01-01", "2017-01-01"),
+                                               tz = "UTC"),
+                             x = c(0L, 1L), n = c(30L, 30L)),
+                  M = 2L, quiet = TRUE)
+  expect_equal(d$surveys$time, c(2016, 2017))
+})
+
+test_that("dates that miss a step say so, and snap accepts them", {
+  mk <- function(...) GCData$new(data.frame(
+    deme = rep(c("a", "b"), each = 3L),
+    time = rep(as.Date(c("2016-03-15", "2017-04-02", "2018-05-20")), 2L),
+    x = c(0L, 1L, 2L, 0L, 0L, 1L), n = rep(30L, 6L)), ...)
+  expect_error(mk(M = 4L, quiet = TRUE), "was a date")
+  d <- mk(M = 12L, snap = TRUE, quiet = TRUE)
+  expect_true(all(d$surveys$step == round(d$surveys$step)))
+})

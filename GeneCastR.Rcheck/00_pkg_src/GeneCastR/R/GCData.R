@@ -74,7 +74,12 @@ GCData <- R6::R6Class(
     #' @param M Lattice steps per unit time. The published fits use 16.
     #' @param t0 Window origin; defaults to `min(time) - 1`.
     #' @param cols Named character vector mapping the four required fields
-    #'   (`deme`, `time`, `x`, `n`) onto columns of `surveys`.
+    #'   (`deme`, `time`, `x`, `n`) onto columns of `surveys`. A `Date` or
+    #'   `POSIXct` `time` column is converted to a decimal year, measured
+    #'   against each year's own length so that leap years are exact and the
+    #'   interval between two dates is the elapsed time; the conversion is
+    #'   reported unless `quiet`. Everything else is taken as a number on
+    #'   whatever scale it already uses.
     #' @param snap `FALSE` (default) requires every survey to land exactly on
     #'   a lattice step. `TRUE` rounds each survey to the nearest step and
     #'   reports how far the worst one moved -- the option for dated data,
@@ -113,9 +118,25 @@ GCData <- R6::R6Class(
              call. = FALSE)
       }
 
+      ## A Date or POSIXct column becomes a decimal year rather than
+      ## as.numeric()'s days or seconds since 1970, which would be a silently
+      ## wrong time axis rather than an error.
+      tin <- surveys[[cols[["time"]]]]
+      dated <- inherits(tin, "Date") || inherits(tin, "POSIXt")
+      if (dated) {
+        tin <- private$as_decimal_year(tin)
+        if (!quiet) {
+          message("`time` converted from ",
+                  if (inherits(surveys[[cols[["time"]]]], "Date"))
+                    "Date" else "POSIXct",
+                  " to decimal years (", format(min(tin), digits = 9), " to ",
+                  format(max(tin), digits = 9), ").")
+        }
+      }
+
       d <- data.frame(
         deme = as.character(surveys[[cols[["deme"]]]]),
-        time = as.numeric(surveys[[cols[["time"]]]]),
+        time = as.numeric(tin),
         x    = as.numeric(surveys[[cols[["x"]]]]),
         n    = as.numeric(surveys[[cols[["n"]]]]),
         stringsAsFactors = FALSE
@@ -193,6 +214,10 @@ GCData <- R6::R6Class(
                " with M = ", M, " and t0 = ", t0,
                ".\nRaise M, or move t0, so every survey lands on a step -- ",
                "or pass snap = TRUE to round to the nearest step.",
+               if (dated)
+                 paste0("\nThe `time` column was a date, and calendar dates ",
+                        "rarely fall on a step: snap = TRUE is usually what ",
+                        "is wanted here."),
                call. = FALSE)
         }
         if (!quiet) {
@@ -336,6 +361,17 @@ GCData <- R6::R6Class(
   ),
 
   private = list(
+    ## Calendar date to decimal year: the year plus the fraction of that year
+    ## elapsed, measured against the year's own length so leap years are
+    ## exact.  2016-01-01 is 2016, 2017-01-01 is 2017, and the spacing
+    ## between two dates is the real elapsed time rather than a day count.
+    as_decimal_year = function(x) {
+      if (inherits(x, "POSIXt")) x <- as.Date(x)
+      y <- as.integer(format(x, "%Y"))
+      jan <- as.Date(sprintf("%d-01-01", y))
+      nxt <- as.Date(sprintf("%d-01-01", y + 1L))
+      y + as.numeric(x - jan) / as.numeric(nxt - jan)
+    },
     check_integer = function(v, nm) {
       if (any(abs(v - round(v)) > 1e-8)) {
         bad <- which(abs(v - round(v)) > 1e-8)
@@ -392,6 +428,29 @@ gc_example_data <- function(M = 16, ...) {
 #' @export
 gc_example_fit <- function() {
   f <- system.file("extdata", "uganda_fit.rds", package = "GeneCastR")
+  if (!nzchar(f))
+    stop("the stored fit is missing; is the package installed?",
+         call. = FALSE)
+  readRDS(f)
+}
+
+#' Stored fits under the negative binomial prior on `t*`
+#'
+#' Two fits to [gc_example_data()]: `panel`, with one arrival prior for the
+#' whole panel, which is the fit the tutorials show; and `deme`, with
+#' `tstar_min` and `tstar_mean` differing by deme. Both carry a projection
+#' computed at `n_draws = 400`, `n_paths = 400`.
+#'
+#' The per-deme values are **illustrative**. They are not surveillance dates
+#' or published estimates; they stand in for the kind of per-deme knowledge a
+#' programme might hold.
+#'
+#' @return A list with `panel` and `deme`, each holding a `fit` and a `pr`,
+#'   plus the `tmin` and `tmean` vectors the per-deme fit used.
+#' @seealso [gc_example_fit()] for a fit under the geometric prior.
+#' @export
+gc_example_tstar_fit <- function() {
+  f <- system.file("extdata", "tstar_fit.rds", package = "GeneCastR")
   if (!nzchar(f))
     stop("the stored fit is missing; is the package installed?",
          call. = FALSE)

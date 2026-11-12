@@ -53,7 +53,9 @@ test_that("gc_waic is computed at the deme level", {
 })
 
 test_that("lppd is bounded above by the best single draw", {
-  fit <- tiny()
+  ## geometric here so the comparison likelihood can be rebuilt from theta
+  ## alone; the negative binomial default is covered in test-tstar.R
+  fit <- tiny(gc_control(tstar = "geometric"))
   w <- gc_waic(fit, n_draws = 60L)
   ## a posterior average of likelihoods cannot beat the best draw
   d <- fit$data

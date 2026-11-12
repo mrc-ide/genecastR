@@ -256,7 +256,7 @@ void emission_fill(int N, int x, int n, double* e) {
 void lambda_pt_fill(int N, double alpha, double lam, int T,
                     const int* step, const int* x, const int* n,
                     int nobs, int cut, double* out, int founding,
-                    double tstar_p) {
+                    double tstar_p, const double* tstar_lw) {
   const std::size_t S = (std::size_t)N + 1;
 
   Banded B;
@@ -304,7 +304,13 @@ void lambda_pt_fill(int N, double alpha, double lam, int T,
   }
 
   // the prior over t*
-  if (tstar_p > 0.0) {
+  if (tstar_lw) {
+    // supplied directly, one weight per step plus the beyond-T atom
+    for (int t = 1; t <= T; ++t) out[t - 1] += tstar_lw[t - 1];
+    bool all_zero = true;
+    for (int j = 0; j < nobs; ++j) if (x[j] != 0) { all_zero = false; break; }
+    out[T] = all_zero ? tstar_lw[T] : NEG_INF;
+  } else if (tstar_p > 0.0) {
     // Geometric: p(t* = t) = (1-p)^(t-1) p, and the remaining (1-p)^T is the
     // branch where the variant never reached the deme within the record.
     const double l1p = std::log1p(-tstar_p), lp = std::log(tstar_p);
@@ -427,11 +433,20 @@ static void deme_fields(const Rcpp::List& e, Rcpp::IntegerVector& step,
 Rcpp::NumericVector gc_loglik_pt(Rcpp::IntegerVector Nlat, double alpha,
                                  Rcpp::NumericVector lambda, int T,
                                  Rcpp::List demes, int founding = 0,
-                                 double tstar_p = -1.0) {
+                                 double tstar_p = -1.0,
+                                 Rcpp::Nullable<Rcpp::NumericMatrix> tstar_logw
+                                   = R_NilValue) {
   const int D = demes.size();
   if (Nlat.size() != D || lambda.size() != D)
     Rcpp::stop("Nlat and lambda must have one entry per deme");
   if (T < 1) Rcpp::stop("T must be at least 1");
+
+  // (T + 1) x D, so each deme's weights are one contiguous column
+  const bool have_lw = tstar_logw.isNotNull();
+  Rcpp::NumericMatrix LW = have_lw ? Rcpp::NumericMatrix(tstar_logw.get())
+                                   : Rcpp::NumericMatrix(0, 0);
+  if (have_lw && (LW.nrow() != T + 1 || LW.ncol() != D))
+    Rcpp::stop("tstar_logw must be (T + 1) x D");
 
   Rcpp::NumericVector out(D);
   std::vector<double> lam((std::size_t)T + 1);
@@ -442,10 +457,37 @@ Rcpp::NumericVector gc_loglik_pt(Rcpp::IntegerVector Nlat, double alpha,
     int cut;
     deme_fields(e, step, x, n, cut);
     lambda_pt_fill(Nlat[d], alpha, lambda[d], T, &step[0], &x[0], &n[0],
-                   step.size(), cut, &lam[0], founding, tstar_p);
+                   step.size(), cut, &lam[0], founding, tstar_p,
+                   have_lw ? &LW(0, d) : 0);
     out[d] = gc_logsumexp(&lam[0], T + 1);
   }
   return out;
+}
+
+//' Log-weights for a shifted negative binomial introduction time
+//'
+//' `t* = tmin + NegBin(mu, r)` in steps, with `mu` the mean of the offset
+//' and `r` its size, so `Var = mu + mu^2/r`. `r = 1` is the geometric, and
+//' as `r` grows the law tends to Poisson. Because the backward pass never
+//' sees the prior, these weights are all that distinguishes one law on `t*`
+//' from another.
+//'
+//' @param T Number of lattice steps.
+//' @param tmin Earliest step the arrival may fall on, at least 1.
+//' @param mu Mean of the offset from `tmin`, in steps.
+//' @param r Size of the negative binomial; `1` gives the geometric.
+//' @return `T + 1` log-weights: `log p(t* = t)` for `t = 1..T`, then
+//'   `log p(t* > T)`.
+//' @keywords internal
+//' @export
+// [[Rcpp::export]]
+Rcpp::NumericVector gc_tstar_negbin_logw(int T, int tmin, double mu,
+                                         double r) {
+  if (T < 1) Rcpp::stop("T must be at least 1");
+  if (!(mu > 0) || !(r > 0)) Rcpp::stop("mu and r must be positive");
+  std::vector<double> lw;
+  tstar_negbin_logw(T, tmin, mu, r, lw);
+  return Rcpp::wrap(lw);
 }
 
 //' Posterior over the introduction time, for one parameter draw
@@ -465,11 +507,19 @@ Rcpp::NumericVector gc_loglik_pt(Rcpp::IntegerVector Nlat, double alpha,
 Rcpp::NumericMatrix gc_tstar_pt(Rcpp::IntegerVector Nlat, double alpha,
                                 Rcpp::NumericVector lambda, int T,
                                 Rcpp::List demes, int founding = 0,
-                                double tstar_p = -1.0) {
+                                double tstar_p = -1.0,
+                                Rcpp::Nullable<Rcpp::NumericMatrix> tstar_logw
+                                  = R_NilValue) {
   const int D = demes.size();
   if (Nlat.size() != D || lambda.size() != D)
     Rcpp::stop("Nlat and lambda must have one entry per deme");
   if (T < 1) Rcpp::stop("T must be at least 1");
+
+  const bool have_lw = tstar_logw.isNotNull();
+  Rcpp::NumericMatrix LW = have_lw ? Rcpp::NumericMatrix(tstar_logw.get())
+                                   : Rcpp::NumericMatrix(0, 0);
+  if (have_lw && (LW.nrow() != T + 1 || LW.ncol() != D))
+    Rcpp::stop("tstar_logw must be (T + 1) x D");
 
   Rcpp::NumericMatrix out(D, T + 1);
   std::vector<double> lam((std::size_t)T + 1);
@@ -480,7 +530,8 @@ Rcpp::NumericMatrix gc_tstar_pt(Rcpp::IntegerVector Nlat, double alpha,
     int cut;
     deme_fields(e, step, x, n, cut);
     lambda_pt_fill(Nlat[d], alpha, lambda[d], T, &step[0], &x[0], &n[0],
-                   step.size(), cut, &lam[0], founding, tstar_p);
+                   step.size(), cut, &lam[0], founding, tstar_p,
+                   have_lw ? &LW(0, d) : 0);
     const double lse = gc_logsumexp(&lam[0], T + 1);
     for (int t = 0; t <= T; ++t) out(d, t) = std::exp(lam[t] - lse);
   }

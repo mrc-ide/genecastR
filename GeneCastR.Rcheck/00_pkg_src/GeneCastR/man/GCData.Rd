@@ -121,7 +121,12 @@ model never assumes years.}
       \item{\code{M}}{Lattice steps per unit time. The published fits use 16.}
       \item{\code{t0}}{Window origin; defaults to \code{min(time) - 1}.}
       \item{\code{cols}}{Named character vector mapping the four required fields
-(\code{deme}, \code{time}, \code{x}, \code{n}) onto columns of \code{surveys}.}
+(\code{deme}, \code{time}, \code{x}, \code{n}) onto columns of \code{surveys}. A \code{Date} or
+\code{POSIXct} \code{time} column is converted to a decimal year, measured
+against each year's own length so that leap years are exact and the
+interval between two dates is the elapsed time; the conversion is
+reported unless \code{quiet}. Everything else is taken as a number on
+whatever scale it already uses.}
       \item{\code{snap}}{\code{FALSE} (default) requires every survey to land exactly on
 a lattice step. \code{TRUE} rounds each survey to the nearest step and
 reports how far the worst one moved -- the option for dated data,

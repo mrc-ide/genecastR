@@ -7,6 +7,8 @@ gc_alpha                Per-step selection coefficient from the
 gc_control              Prior and sampler settings
 gc_example_data         The Ugandan C469Y panel
 gc_example_fit          The fitted Ugandan panel
+gc_example_tstar_fit    Stored fits under the negative binomial prior
+                        on t*
 gc_lambda               Per-step Poisson mean from the per-unit-time
                         influx frequency
 gc_nlat                 Lattice size from a log effective size

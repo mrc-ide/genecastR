@@ -7,7 +7,7 @@ set.seed(1)
 library(GeneCastR)
 
 ## -----------------------------------------------------------------------------
-drift_per_year <- function(M, N_eff = 15.6, f = 0.3, N_lat = NULL) {
+drift_per_year <- function(M, N_eff = 14.5, f = 0.3, N_lat = NULL) {
   nl <- if (is.null(N_lat)) gc_nlat(log(N_eff), M) else N_lat
   P <- gc_kernel(nl, 0)                       # neutral
   k <- round(f * nl); g <- (0:nl) / nl
@@ -16,32 +16,39 @@ drift_per_year <- function(M, N_eff = 15.6, f = 0.3, N_lat = NULL) {
 }
 c(M8 = drift_per_year(8), M16 = drift_per_year(16),
   M32 = drift_per_year(32), M128 = drift_per_year(128),
-  target = 0.3 * 0.7 / 15.6)
+  target = 0.3 * 0.7 / 14.5)
 
 ## -----------------------------------------------------------------------------
-vapply(c(8, 16, 32, 64), drift_per_year, numeric(1), N_lat = 250L)
+vapply(c(8, 16, 32, 64), drift_per_year, numeric(1), N_lat = 232L)
 
 ## -----------------------------------------------------------------------------
 d <- gc_example_data(M = 16)
 d
 
 ## ----fit----------------------------------------------------------------------
-stored <- gc_example_fit()
+stored <- gc_example_tstar_fit()$panel
 fit <- stored$fit
 fit
 
 ## ----eval = FALSE-------------------------------------------------------------
 # fit <- GCFit$new(d, chains = 4, iter = 4000, warmup = 2000, seed = 101,
-#                  cores = 4, lead_in = 6 * 16, control = gc_control(selection = "shared"))
+#                  cores = 4, lead_in = 6 * 16,
+#                  control = gc_control(tstar_min = 2012, tstar_mean = 2017,
+#                                       tstar_learn = "shape", tstar_shape = 2))
 
 ## ----fig.height = 5-----------------------------------------------------------
-gc_plot_trace(fit)
+gc_plot_trace(fit, c("u", "nu", "N_eff", "tstar_shape"))
 
 ## ----fig.height = 5-----------------------------------------------------------
-gc_plot_hist(fit)
+gc_plot_hist(fit, c("A", "nu", "N_eff", "tstar_shape"))
 
 ## ----fig.height = 6-----------------------------------------------------------
 gc_plot_pairs(fit)
+
+## -----------------------------------------------------------------------------
+sh <- as.numeric(posterior::as_draws_matrix(fit$draws)[, "tstar_shape"])
+rbind(prior = 1 + stats::qexp(c(.05, .5, .95)),
+      posterior = stats::quantile(sh, c(.05, .5, .95)))
 
 ## ----fig.height = 3.6---------------------------------------------------------
 gc_plot_hist(fit, "A", ncol = 1)
@@ -54,14 +61,15 @@ round(stats::quantile(A, c(.025, .05, .25, .5, .75, .95, .975)), 3)
 c(`P(A > 0)` = mean(A > 0), `P(A > 0.25)` = mean(A > 0.25))
 
 ## -----------------------------------------------------------------------------
-fit$info[, c("chain", "accept_z", "accept_u", "accept_nu", "guard_rejects")]
+fit$info[, c("chain", "accept_z", "accept_u", "accept_nu", "accept_shape",
+             "guard_rejects")]
 
 ## ----project------------------------------------------------------------------
 pr <- stored$pr
 pr
 
 ## ----eval = FALSE-------------------------------------------------------------
-# pr <- fit$project(horizon = 3, n_draws = 200, n_paths = 400,
+# pr <- fit$project(horizon = 3, n_draws = 400, n_paths = 400,
 #                   thresholds = c(0.01, 0.05, 0.10))
 
 ## -----------------------------------------------------------------------------

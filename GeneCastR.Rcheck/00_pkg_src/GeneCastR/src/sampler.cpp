@@ -25,9 +25,11 @@
 
 static inline double loglik_one(const DemeObs& o, int N, double alpha,
                                 double lam, int T, std::vector<double>& buf,
-                                int founding, double tstar_p) {
+                                int founding, double tstar_p,
+                                const double* lw = 0) {
   lambda_pt_fill(N, alpha, lam, T, o.step.data(), o.x.data(), o.n.data(),
-                 (int)o.step.size(), o.cut, buf.data(), founding, tstar_p);
+                 (int)o.step.size(), o.cut, buf.data(), founding, tstar_p,
+                 lw);
   return gc_logsumexp(buf.data(), T + 1);
 }
 
@@ -63,7 +65,16 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
                       double step_z, double step_u, double step_nu,
                       Rcpp::List prior, double target, int founding = 0,
                       double tstar_p = -1.0, bool shared = false,
-                      int u_mode = 0) {
+                      int u_mode = 0, bool tstar_negbin = false,
+                      Rcpp::IntegerVector tstar_tmin =
+                        Rcpp::IntegerVector::create(),
+                      Rcpp::NumericVector tstar_mu =
+                        Rcpp::NumericVector::create(),
+                      double tstar_r0 = 1.0, double tstar_shape_rate = 1.0,
+                      bool tstar_learn_shape = true,
+                      bool tstar_learn_mean = false,
+                      double tstar_mu0 = 0.0,
+                      double tstar_logmu_sd = 0.5) {
 
   const int D = demes.size();
   if (z0.size() != D) Rcpp::stop("z0 must have one entry per deme");
@@ -96,8 +107,35 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
   const double u_sig  = prior["u_sig"],  u_df   = prior["u_df"];
   const double th_rate = prior["th_rate"];
   const double th_lo = prior["lth_lo"], th_hi = prior["lth_hi"];
-  const bool geom = (tstar_p > 0.0);
+  const bool geom = (tstar_p > 0.0) && !tstar_negbin;
   const double steps_per_year = (double)M;
+
+  // t* = t_min + NegBin(mu, r), per deme.  The prior never enters the
+  // backward pass, so a proposal for the shape or the mean only has to
+  // rebuild these weights -- the conditional likelihoods are unchanged in
+  // form, though they still have to be re-evaluated to re-weight them.
+  if (tstar_negbin) {
+    if (tstar_tmin.size() != D || tstar_mu.size() != D)
+      Rcpp::stop("tstar_tmin and tstar_mu must have one entry per deme");
+    if (!(tstar_r0 > 0)) Rcpp::stop("tstar_r0 must be positive");
+  }
+  double l_r  = tstar_negbin ? std::log(tstar_r0) : 0.0;
+  double l_mu = (tstar_negbin && tstar_learn_mean && tstar_mu0 > 0)
+                  ? std::log(tstar_mu0) : 0.0;
+  const std::size_t LWS = (std::size_t)T + 1;
+  std::vector<double> LW(tstar_negbin ? LWS * (std::size_t)D : 0),
+                      LWp(tstar_negbin ? LWS * (std::size_t)D : 0), lwbuf;
+  auto build_lw = [&](double r, double lmu, std::vector<double>& W) {
+    for (int d = 0; d < D; ++d) {
+      const double mu_d = tstar_learn_mean ? std::exp(lmu) : tstar_mu[d];
+      tstar_negbin_logw(T, tstar_tmin[d], mu_d, r, lwbuf);
+      std::copy(lwbuf.begin(), lwbuf.end(), W.begin() + (std::size_t)d * LWS);
+    }
+  };
+  if (tstar_negbin) build_lw(std::exp(l_r), l_mu, LW);
+  auto lwp = [&](int d) -> const double* {
+    return tstar_negbin ? &LW[(std::size_t)d * LWS] : 0;
+  };
   const double z_lo = std::log(ne_lo), z_hi = std::log(ne_hi);
 
   // log prior on log(nu): half-normal with the Jacobian
@@ -142,16 +180,16 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
   double nu = std::exp(lnu);
   for (int d = 0; d < D; ++d)
     L[d] = loglik_one(obs[d], nlat_of(z[d], M), av[d], nu * std::exp(z[d]),
-                      T, buf, founding, p_t);
+                      T, buf, founding, p_t, lwp(d));
 
-  Rcpp::NumericMatrix out(n_iter, 2 * D + 7);
+  Rcpp::NumericMatrix out(n_iter, 2 * D + 9);
   // `win_*` drives adaptation and is reset at every adaptation step.
   // `acc_*` is the rate reported back, and counts post-warm-up sweeps only:
   // tying it to the adaptation resets made it depend on whether `warm` was a
   // multiple of the adaptation window, and it could then exceed one.
-  double acc_z = 0, acc_u = 0, acc_n = 0, acc_t = 0;
-  double win_z = 0, win_u = 0, win_n = 0, win_t = 0;
-  double step_th = 0.5;
+  double acc_z = 0, acc_u = 0, acc_n = 0, acc_t = 0, acc_r = 0, acc_m = 0;
+  double win_z = 0, win_u = 0, win_n = 0, win_t = 0, win_r = 0, win_m = 0;
+  double step_th = 0.5, step_lr = 0.4, step_lm = 0.3;
   const int W = 50;
   long guard = 0;
 
@@ -174,7 +212,7 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
         const int Np = nlat_of(zp0, M);
         for (int d = 0; d < D; ++d) {
           Lp[d] = loglik_one(obs[d], Np, av[d], nu * std::exp(zp0), T, buf,
-                             founding, p_t);
+                             founding, p_t, lwp(d));
           sp += Lp[d]; sc += L[d];
         }
         const double pri = -0.5 * ((zp0 - mu0) * (zp0 - mu0)
@@ -189,7 +227,8 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
       zp[d] = z[d] + step_z * R::norm_rand();
       if (zp[d] < z_lo || zp[d] > z_hi) { ++guard; continue; }
       Lp[d] = loglik_one(obs[d], nlat_of(zp[d], M), av[d],
-                         nu * std::exp(zp[d]), T, buf, founding, p_t);
+                         nu * std::exp(zp[d]), T, buf, founding,
+                         p_t, lwp(d));
       const double hier = -0.5 * ((zp[d] - mu) * (zp[d] - mu)
                                 - (z[d]  - mu) * (z[d]  - mu)) / s2;
       if (std::log(R::unif_rand()) < Lp[d] - L[d] + hier) {
@@ -211,7 +250,7 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
         const double ap = std::exp(up[d] / (double)M) - 1.0;
         const double Lq = loglik_one(obs[d], nlat_of(z[d], M), ap,
                                      nu * std::exp(z[d]), T, buf, founding,
-                                     p_t);
+                                     p_t, lwp(d));
         // each deme shrinks toward mu_u with spread sigma_u
         if (std::log(R::unif_rand()) <
             Lq - L[d] - 0.5 * ((up[d] - mu_u) * (up[d] - mu_u)
@@ -243,7 +282,8 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
         double sp = 0.0, sc = 0.0;
         for (int d = 0; d < D; ++d) {
           Lp[d] = loglik_one(obs[d], nlat_of(z[d], M), ap,
-                             nu * std::exp(z[d]), T, buf, founding, p_t);
+                             nu * std::exp(z[d]), T, buf, founding,
+                             p_t, lwp(d));
           sp += Lp[d]; sc += L[d];
         }
         if (std::log(R::unif_rand()) <
@@ -266,7 +306,8 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
         double sp = 0.0, sc = 0.0;
         for (int d = 0; d < D; ++d) {
           Lp[d] = loglik_one(obs[d], nlat_of(z[d], M), av[d],
-                             nup * std::exp(z[d]), T, buf, founding, p_t);
+                             nup * std::exp(z[d]), T, buf, founding,
+                             p_t, lwp(d));
           sp += Lp[d]; sc += L[d];
         }
         if (std::log(R::unif_rand()) <
@@ -289,7 +330,8 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
         double sp = 0.0, sc = 0.0;
         for (int d = 0; d < D; ++d) {
           Lp[d] = loglik_one(obs[d], nlat_of(z[d], M), av[d],
-                             nu * std::exp(z[d]), T, buf, founding, pp);
+                             nu * std::exp(z[d]), T, buf, founding,
+                             pp, lwp(d));
           sp += Lp[d]; sc += L[d];
         }
         if (std::log(R::unif_rand()) <
@@ -301,6 +343,64 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
         }
       } else {
         ++guard;
+      }
+    }
+
+    // ---- block 3c: the negative binomial shape ---------------------------
+    // The shape touches only the prior weights, but every conditional
+    // likelihood has to be re-weighted, so a proposal costs one pass over
+    // the demes just as the other blocks do.
+    if (tstar_negbin && tstar_learn_shape) {
+      const double lp_ = l_r + step_lr * R::norm_rand();
+      // shape >= 1.  Below one the negative binomial collapses onto t_min --
+      // dnbinom(0; r, mu) -> 1 as r -> 0 -- which puts an atom at the bound
+      // whose size depends on the mean and, as a density, on M.  That is the
+      // one region where this prior is not resolution-invariant, so it is
+      // excluded rather than reshaped.
+      if (lp_ < 0.0) { ++guard; } else {
+      build_lw(std::exp(lp_), l_mu, LWp);
+      double sp = 0.0, sc = 0.0;
+      for (int d = 0; d < D; ++d) {
+        Lp[d] = loglik_one(obs[d], nlat_of(z[d], M), av[d],
+                           nu * std::exp(z[d]), T, buf, founding, p_t,
+                           &LWp[(std::size_t)d * LWS]);
+        sp += Lp[d]; sc += L[d];
+      }
+      // r = 1 + Exponential(rate), sampled on log r, so the prior term is
+      // -rate * (r - 1) plus the log Jacobian
+      const double pri = -tstar_shape_rate * (std::exp(lp_) - std::exp(l_r))
+                         + (lp_ - l_r);
+      if (std::log(R::unif_rand()) < sp - sc + pri) {
+        l_r = lp_; LW.swap(LWp);
+        for (int d = 0; d < D; ++d) L[d] = Lp[d];
+        win_r += 1.0;
+        if (it >= warm) acc_r += 1.0;
+      }
+      }
+    }
+
+    // ---- block 3d: the shared mean, when it is learnt --------------------
+    if (tstar_negbin && tstar_learn_mean) {
+      const double lp_ = l_mu + step_lm * R::norm_rand();
+      build_lw(std::exp(l_r), lp_, LWp);
+      double sp = 0.0, sc = 0.0;
+      for (int d = 0; d < D; ++d) {
+        Lp[d] = loglik_one(obs[d], nlat_of(z[d], M), av[d],
+                           nu * std::exp(z[d]), T, buf, founding, p_t,
+                           &LWp[(std::size_t)d * LWS]);
+        sp += Lp[d]; sc += L[d];
+      }
+      // lognormal around the mean that was asked for, so "specified" means
+      // centred there rather than pinned there
+      const double c0 = std::log(tstar_mu0);
+      const double pri = -0.5 * ((lp_ - c0) * (lp_ - c0)
+                                - (l_mu - c0) * (l_mu - c0))
+                         / (tstar_logmu_sd * tstar_logmu_sd);
+      if (std::log(R::unif_rand()) < sp - sc + pri) {
+        l_mu = lp_; LW.swap(LWp);
+        for (int d = 0; d < D; ++d) L[d] = Lp[d];
+        win_m += 1.0;
+        if (it >= warm) acc_m += 1.0;
       }
     }
 
@@ -328,7 +428,9 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
       step_u  *= adj(win_u);
       step_nu *= adj(win_n);
       if (geom) step_th *= adj(win_t);
-      win_z = win_u = win_n = win_t = 0.0;
+      if (tstar_negbin && tstar_learn_shape) step_lr *= adj(win_r);
+      if (tstar_negbin && tstar_learn_mean) step_lm *= adj(win_m);
+      win_z = win_u = win_n = win_t = win_r = win_m = 0.0;
     }
 
     for (int d = 0; d < D; ++d) out(it, d) = z[d];
@@ -340,6 +442,13 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
     for (int d = 0; d < D; ++d) out(it, D + 5 + d) = uv[d];
     out(it, 2 * D + 5) = u_hier ? mu_u : NA_REAL;
     out(it, 2 * D + 6) = u_hier ? std::sqrt(s2_u) : NA_REAL;
+    // only reported when it is a parameter: a frozen shape is a setting,
+    // and a zero-variance column has no Rhat
+    out(it, 2 * D + 7) = (tstar_negbin && tstar_learn_shape)
+                           ? std::exp(l_r) : NA_REAL;
+    // the mean OFFSET from t_min, in steps; NA when it is not a parameter
+    out(it, 2 * D + 8) = (tstar_negbin && tstar_learn_mean)
+                           ? std::exp(l_mu) : NA_REAL;
 
     if ((it & 255) == 0) Rcpp::checkUserInterrupt();
   }
@@ -349,9 +458,11 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
     Rcpp::_["draws"]  = out,
     Rcpp::_["accept"] = Rcpp::NumericVector::create(
       Rcpp::_["z"] = acc_z / post, Rcpp::_["u"] = acc_u / post,
-      Rcpp::_["nu"] = acc_n / post, Rcpp::_["theta"] = acc_t / post),
+      Rcpp::_["nu"] = acc_n / post, Rcpp::_["theta"] = acc_t / post,
+      Rcpp::_["shape"] = acc_r / post, Rcpp::_["mean"] = acc_m / post),
     Rcpp::_["steps"]  = Rcpp::NumericVector::create(
       Rcpp::_["z"] = step_z, Rcpp::_["u"] = step_u,
-      Rcpp::_["nu"] = step_nu, Rcpp::_["theta"] = step_th),
+      Rcpp::_["nu"] = step_nu, Rcpp::_["theta"] = step_th,
+      Rcpp::_["shape"] = step_lr, Rcpp::_["mean"] = step_lm),
     Rcpp::_["guard_rejects"] = (double)guard);
 }

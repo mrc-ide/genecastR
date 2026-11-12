@@ -3,6 +3,10 @@
 
 #include <vector>
 #include <cstddef>
+#include <cmath>
+#include <algorithm>
+#include <limits>
+#include <Rmath.h>
 
 // A row-banded transition kernel.  Row i holds `len[i]` live entries starting
 // at column `lo[i]`, packed contiguously at `vals[off[i]]`.  Everything
@@ -69,10 +73,47 @@ inline void banded_tmv(const Banded& B, const double* a, double* out) {
 //                  window with probability one and the last element is -Inf.
 //   tstar_p  > 0   t* ~ Geometric(tstar_p) per step, so arrival carries a
 //                  constant hazard and may fall beyond the record.
+//   tstar_lw != 0  the prior is supplied directly as T + 1 log-weights for
+//                  this deme: `log p(t* = t)` for t = 1..T and
+//                  `log p(t* > T)` last.  Because the backward pass never
+//                  sees the prior -- it is added to the conditional
+//                  likelihoods afterwards -- any law on t* can be expressed
+//                  this way, per deme, at no cost beyond the weights.
 void lambda_pt_fill(int N, double alpha, double lam, int T,
                     const int* step, const int* x, const int* n,
                     int nobs, int cut, double* out, int founding = 0,
-                    double tstar_p = -1.0);
+                    double tstar_p = -1.0, const double* tstar_lw = 0);
+
+// Log-weights for t* = tmin + NegBin(mu, r), in steps.  `mu` is the mean of
+// the offset in steps and `r` its size, so Var = mu + mu^2/r and r = 1 is the
+// geometric.  Steps before `tmin` get -Inf; the last slot carries the
+// upper-tail mass, computed from pnbinom rather than by subtracting a sum,
+// which loses all its precision once the tail is small.
+inline void tstar_negbin_logw(int T, int tmin, double mu, double r,
+                              std::vector<double>& lw) {
+  const double ninf = -std::numeric_limits<double>::infinity();
+  lw.assign((std::size_t)T + 1, ninf);
+  if (tmin < 1) tmin = 1;
+  for (int t = tmin; t <= T; ++t)
+    lw[(std::size_t)t - 1] = ::Rf_dnbinom_mu((double)(t - tmin), r, mu, 1);
+  lw[(std::size_t)T] = (tmin > T)
+    ? 0.0                                   // every step excluded: all mass beyond T
+    : ::Rf_pnbinom_mu((double)(T - tmin), r, mu, 0, 1);
+}
+
+// The per-step founding hazard implied by a set of log-weights:
+// h[t] = p(t* = t+1) / p(t* > t), which is what the projection and the path
+// sampler need.  Accumulating the survivor backwards keeps it exact.
+inline void tstar_hazard_logw(int T, const double* lw, std::vector<double>& h) {
+  h.assign((std::size_t)T, 0.0);
+  double surv = std::exp(lw[(std::size_t)T]);
+  for (int t = T; t >= 1; --t) {
+    const double pi = std::exp(lw[(std::size_t)t - 1]);
+    const double prev = surv + pi;
+    h[(std::size_t)t - 1] = (prev > 1e-300) ? pi / prev : 0.0;
+    surv = prev;
+  }
+}
 
 double gc_logsumexp(const double* v, int m);
 

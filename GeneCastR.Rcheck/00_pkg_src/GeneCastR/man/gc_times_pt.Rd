@@ -14,7 +14,8 @@ gc_times_pt(
   n_paths,
   joint = FALSE,
   founding = 0L,
-  tstar_p = -1
+  tstar_p = -1,
+  tstar_haz = NULL
 )
 }
 \arguments{

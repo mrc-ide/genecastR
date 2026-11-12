@@ -9,7 +9,29 @@
 
 .COL <- c(freq = "#c0392b", present = "#2a78d6", ink = "#0b0b0b",
           muted = "#8a8982", tfirst = "#2f7d4f", test = "#7b4fa6",
-          shade = "#f6f2ea")
+          shade = "#f6f2ea", hot = "#d62728")
+
+## Contiguous runs where presence exceeds a level, per deme, as rectangles
+## spanning the steps they cover.  The half-step padding makes neighbouring
+## runs meet rather than leaving hairlines between them.
+.above_runs <- function(cv, level) {
+  ts <- sort(unique(cv$time))
+  half <- if (length(ts) > 1L) stats::median(diff(ts)) / 2 else 0
+  out <- do.call(rbind, lapply(split(cv, cv$deme), function(x) {
+    x <- x[order(x$time), ]
+    a <- !is.na(x$p_present) & x$p_present > level
+    if (!any(a)) return(NULL)
+    r <- rle(a)
+    e <- cumsum(r$lengths); b <- e - r$lengths + 1L
+    k <- which(r$values)
+    data.frame(deme = as.character(x$deme[1L]),
+               xmin = x$time[b[k]] - half, xmax = x$time[e[k]] + half,
+               stringsAsFactors = FALSE)
+  }))
+  if (is.null(out)) return(NULL)
+  out$deme <- factor(out$deme, levels = levels(cv$deme))
+  out
+}
 
 .gc_theme <- function() {
   ggplot2::theme_minimal(base_size = 9) +
@@ -183,12 +205,20 @@ gc_plot_frequency <- function(pr, demes = NULL, inner = TRUE,
 #' @param pr A [GCProjection].
 #' @param demes Demes to show; `NULL` for all.
 #' @param order Facet order; see [gc_plot_frequency].
-#' @param bands Draw the across-draw quantiles behind the mean.
+#' @param bands Draw the across-draw quantiles behind the mean. Off by
+#'   default: they say how well the data pin the probability rather than how
+#'   uncertain the outcome is, and three overlapping fills are hard to read
+#'   at once.
+#' @param highlight Shade the stretches where presence exceeds this
+#'   probability, or `NULL` for none. The comparison is against the mean, so
+#'   a shaded stretch reads as "probably present" rather than "confidently
+#'   probably present" -- for the stricter reading, pass `bands = TRUE` and
+#'   look at where the lower edge sits.
 #' @param ncol Facet columns.
 #' @return A ggplot.
 #' @export
-gc_plot_present <- function(pr, demes = NULL, bands = TRUE,
-                            order = "name", ncol = 4L) {
+gc_plot_present <- function(pr, demes = NULL, bands = FALSE,
+                            highlight = 0.8, order = "name", ncol = 4L) {
   .need_ggplot()
   keep <- .subset_demes(pr, demes)
   p <- .panels(pr, by = order)
@@ -202,6 +232,17 @@ gc_plot_present <- function(pr, demes = NULL, bands = TRUE,
   if (w[3] > w[2])
     g <- g + ggplot2::annotate("rect", xmin = w[2], xmax = w[3],
                                ymin = -Inf, ymax = Inf, fill = .COL[["shade"]])
+  if (!is.null(highlight) && !is.na(highlight)) {
+    if (!(length(highlight) == 1L && highlight > 0 && highlight < 1))
+      stop("`highlight` must be a single probability in (0, 1), or NULL.",
+           call. = FALSE)
+    hl <- .above_runs(cv, highlight)
+    if (!is.null(hl))
+      g <- g + ggplot2::geom_rect(
+        data = hl, ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax,
+                                ymin = -Inf, ymax = Inf),
+        fill = .COL[["hot"]], alpha = .12, inherit.aes = FALSE)
+  }
   if (bands)
     g <- g + ggplot2::geom_ribbon(
       ggplot2::aes(ymin = .data$p_present_q2.5, ymax = .data$p_present_q97.5),
@@ -219,7 +260,9 @@ gc_plot_present <- function(pr, demes = NULL, bands = TRUE,
     ggplot2::coord_cartesian(ylim = c(0, 1)) +
     .gc_theme() +
     ggplot2::labs(x = "year", y = "P(present)",
-      title = "Presence probability")
+      title = "Presence probability",
+      subtitle = if (!is.null(highlight) && !is.na(highlight))
+        sprintf("shaded where presence exceeds %.2f", highlight))
 }
 
 

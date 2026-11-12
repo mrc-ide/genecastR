@@ -118,15 +118,33 @@ GCProjection <- R6::R6Class(
 
       fc <- .founding_code(fit$control$founding)
       geom <- identical(fit$control$tstar, "geometric")
-      ## the smoother and the path sampler take one hazard for the whole
-      ## sweep, so the posterior median stands in; the t* posterior below
-      ## uses each draw's own, which is the finer average
-      tp <- if (geom) -expm1(-stats::median(as.numeric(m[idx, "theta"])) / M)
-            else -1
+      nb <- identical(fit$control$tstar, "negbin")
+      tset <- if (nb) .tstar_setup(fit$control, d) else NULL
+      tp <- -1
+      ## The founding hazard is a function of the parameters, so it varies
+      ## from draw to draw exactly as the effective sizes and the growth
+      ## advantage do.  It is built per draw -- (T + H) x D x draws -- rather
+      ## than collapsed to a posterior median: a projection integrated over
+      ## part of the posterior and not the rest is not a posterior
+      ## projection.  Only the uniform prior has no parameters to average.
+      hzm <- NULL
+      if (nb || geom) {
+        sh <- if (nb) as.numeric(m[idx, "tstar_shape"]) else NULL
+        mo <- if (nb && tset$learn_mean)
+          as.numeric(m[idx, "tstar_mean_offset"]) * M else NULL
+        th <- if (geom) as.numeric(m[idx, "theta"]) else NULL
+        hzm <- array(0, dim = c(T + H, D, length(idx)))
+        for (i in seq_along(idx)) {
+          hzm[, , i] <- if (nb)
+            .tstar_haz(tset, T + H, sh[i],
+                       if (is.null(mo)) NULL else mo[i])
+          else -expm1(-th[i] / M)        # geometric: constant in step and deme
+        }
+      }
       r <- gc_project_pt(Z, as.numeric(m[idx, "u"]), as.numeric(m[idx, "nu"]),
                          M = M, T = T, H = H, demes = d$deme_data(),
                          thresholds = thresholds, nbins = nbins,
-                         founding = fc, tstar_p = tp)
+                         founding = fc, tstar_p = tp, tstar_haz = hzm)
 
       TH <- T + H
       fmid <- (seq_len(nbins) - 0.5) / nbins
@@ -170,12 +188,16 @@ GCProjection <- R6::R6Class(
       ddat <- d$deme_data()
       ## D x (T+1): the last column is p(t* > T), the probability the
       ## variant had not reached the deme within the record at all
-      th <- if (geom) as.numeric(m[idx, "theta"]) else rep(NA_real_, nrow(Z))
+      if (!geom) th <- rep(NA_real_, nrow(Z))
+      if (!nb) sh <- rep(NA_real_, nrow(Z))
       ts <- matrix(0, D, T + 1L)
       for (i in seq_len(nrow(Z))) {
         tpi <- if (geom) -expm1(-th[i] / M) else -1
+        lwi <- if (nb) .tstar_logw(tset, T, sh[i],
+                                   if (is.null(mo)) NULL else mo[i]) else NULL
         ts <- ts + gc_tstar_pt(gc_nlat(Z[i, ], M), gc_alpha(uu[i], M),
-                               gc_lambda(nn[i], exp(Z[i, ])), T, ddat, fc, tpi)
+                               gc_lambda(nn[i], exp(Z[i, ])), T, ddat, fc, tpi,
+                               lwi)
       }
       ts <- ts / nrow(Z)
       beyond <- ts[, T + 1L]
@@ -208,7 +230,9 @@ GCProjection <- R6::R6Class(
       if (n_paths > 0L) {
         tm <- gc_times_pt(Z, uu, nn, M = M, T = T, demes = ddat,
                           n_paths = as.integer(n_paths), joint = TRUE,
-                          founding = fc, tstar_p = tp)
+                          founding = fc, tstar_p = tp,
+                          tstar_haz = if (is.null(hzm)) NULL
+                                      else hzm[seq_len(T), , , drop = FALSE])
         self$joint <- tm$joint
         pm <- numeric(D * TH)
         for (dd in seq_len(D))

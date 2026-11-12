@@ -4,7 +4,16 @@
 \alias{gc_loglik_pt}
 \title{Per-deme log-likelihood, introduction time marginalised}
 \usage{
-gc_loglik_pt(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p = -1)
+gc_loglik_pt(
+  Nlat,
+  alpha,
+  lambda,
+  T,
+  demes,
+  founding = 0L,
+  tstar_p = -1,
+  tstar_logw = NULL
+)
 }
 \arguments{
 \item{Nlat}{Integer vector of lattice sizes, one per deme.}

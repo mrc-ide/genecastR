@@ -241,6 +241,7 @@ pr$curves            # one row per site and time step
 pr$demes             # one row per site
 ```
 
-For the model itself, its parameterisation and the full list of settings, see
-`vignette("GeneCastR", "GeneCastR")`. For the arrival-time assumptions, see
-`vignette("introduction-time", "GeneCastR")`.
+For the model itself, its parameterisation, the hierarchical options and the
+full list of settings -- including the arrival-time assumptions and how much
+of an answer they are responsible for -- see
+`vignette("GeneCastRTutorial", "GeneCastR")`.

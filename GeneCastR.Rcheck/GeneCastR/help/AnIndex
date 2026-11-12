@@ -8,6 +8,7 @@ gc_control	gc_control
 gc_emission	gc_emission
 gc_example_data	gc_example_data
 gc_example_fit	gc_example_fit
+gc_example_tstar_fit	gc_example_tstar_fit
 gc_kernel	gc_kernel
 gc_lambda	gc_lambda
 gc_loglik_pt	gc_loglik_pt
@@ -25,6 +26,7 @@ gc_poisson_row	gc_poisson_row
 gc_project_pt	gc_project_pt
 gc_times_pt	gc_times_pt
 gc_toolchain	gc_toolchain
+gc_tstar_negbin_logw	gc_tstar_negbin_logw
 gc_tstar_pt	gc_tstar_pt
 gc_waic	gc_waic
 gc_waic_compare	gc_waic_compare

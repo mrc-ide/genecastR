@@ -15,7 +15,8 @@ gc_project_pt(
   thresholds,
   nbins,
   founding = 0L,
-  tstar_p = -1
+  tstar_p = -1,
+  tstar_haz = NULL
 )
 }
 \arguments{

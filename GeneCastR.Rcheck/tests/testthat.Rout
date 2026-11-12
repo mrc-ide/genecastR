@@ -1,0 +1,33 @@
+
+R version 4.6.2 (2026-10-29) -- "Diversified Portfolio"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(testthat)
+> library(GeneCastR)
+> 
+> test_check("GeneCastR")
+chain 1/1 ...
+[ FAIL 0 | WARN 0 | SKIP 1 | PASS 822 ]
+
+══ Skipped tests (1) ═══════════════════════════════════════════════════════════
+• built without OpenMP; the per-deme loop will run serially (1):
+  'test-toolchain.R:7:5'
+
+[ FAIL 0 | WARN 0 | SKIP 1 | PASS 822 ]
+> 
+> proc.time()
+   user  system elapsed 
+ 88.061   0.705  89.667 

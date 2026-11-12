@@ -1,0 +1,520 @@
+---
+title: "Introduction time and spread of a resistance variant"
+output:
+  markdown::html_format:
+    meta:
+      css: ["@default"]
+vignette: >
+  %\VignetteIndexEntry{Introduction time and spread of a resistance variant}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 9,
+                      fig.height = 6.5, dpi = 96)
+set.seed(1)
+```
+
+This Vignette details the GeneCastR pipeline on sixteen
+Ugandan districts surveyed annually from 2016 to 2022 for the PfKelch13
+C469Y artemisinin-resistance marker.
+
+```{r}
+library(GeneCastR)
+```
+
+## The model
+
+We model in discrete time with `M` steps per unit of time, in our running example one unit of time is equal to one year, with $M=16$ steps per year. We denote the allele count at time $t$ with $k_t$ and set $k_0=0$, meaning that the focal allele is yet to be imported at initialisation.
+
+We denote the first arrival time with `t*`. The arrival event occurs with constant hazard `theta` per unit time, so that $t^* \sim Geometric(1-\exp\{-\theta/M\})$. At `t*` the deme receives a founding count drawn from `Poisson(lambda)` conditioned on being non-zero, where $\lambda \geq 0$.
+
+From `t*` onward $k_t$ follows the following Wright-Fisher dynamics
+
+$$k_{t+1} \mid k_t \sim \mathrm{Binomial}\!\left(N_{\mathrm{lat}},\;
+  \frac{f_t(1+\alpha)}{1+\alpha f_t}\right), \qquad f_t = k_t/N_{\mathrm{lat}},$$
+
+if $k_t\geq 1$, and $k_{t+1}\sim Poi(\lambda)$ if $k_t=0$. This means that a lineage can die out and the deme be re-founded, any number of times.
+
+Observation surveys are modelled as binomial samples. Given a latent frequency  $f_t=k_t/N_{\mathrm{lat}}$ at time $t$, a survey of $n$ gene copies is assumed to follow $x_t \sim Binomial(n, f_t)$.
+
+
+### Parameterisation
+
+The parameters are all cast as **per unit time** to allow for different choices of time resolution $M$. Each is transformed so that it has a 'per year' interpretation invariant to `M`, summarised in the table below; the rest of this section says why each transform has the form it does.
+
+| parameter | meaning | support | state-space quantity | transform |
+|---|---|---|---|---|
+| `A` | growth advantage per unit time | `A > -1` | `alpha`, selection per *step* | `alpha = (1 + A)^(1/M) - 1` |
+| `nu` | gene flow, in frequency units per unit time | `nu > 0` | `lambda`, Poisson mean per *step* | `lambda = nu * N_eff` |
+| `N_eff` | effective size, in gene copies | `N_eff > 0` | `N_lat`, lattice size in copies | `N_lat = max(2, round(M * N_eff))` |
+| `theta` | hazard of founding, per unit time | `theta > 0` | `p`, founding chance per *step* | `p = 1 - exp(-theta / M)` |
+
+A growth advantage of `A` over a unit of time is `M`
+steps of `alpha`, so `(1 + alpha)^M = 1 + A`. Sampling is done on
+`u = log(1 + A)`, which makes `alpha = exp(u/M) - 1`.
+
+`N_lat` is linear in both `M` and `N_eff` Binomial sampling gives the frequency a variance of
+`f(1-f)/N_lat` in one step. Over the `M` steps in a year that accumulates to
+`M * f(1-f) / N_lat`, and setting it equal to `f(1-f)/N_eff` -- the drift of
+a single Wright-Fisher generation in a population of `N_eff` -- forces
+`N_lat = M * N_eff`.
+
+```{r}
+drift_per_year <- function(M, N_eff = 15.6, f = 0.3, N_lat = NULL) {
+  nl <- if (is.null(N_lat)) gc_nlat(log(N_eff), M) else N_lat
+  P <- gc_kernel(nl, 0)                       # neutral
+  k <- round(f * nl); g <- (0:nl) / nl
+  mean_f <- sum(P[k + 1L, ] * g)
+  M * sum(P[k + 1L, ] * (g - mean_f)^2)       # variance per step, times M
+}
+c(M8 = drift_per_year(8), M16 = drift_per_year(16),
+  M32 = drift_per_year(32), M128 = drift_per_year(128),
+  target = 0.3 * 0.7 / 15.6)
+```
+
+Hold `N_lat` fixed instead and a year's worth of drift doubles every time the
+step halves:
+
+```{r}
+vapply(c(8, 16, 32, 64), drift_per_year, numeric(1), N_lat = 250L)
+```
+
+Two parameters are moved on a log scale, because both are positive and
+neither is bounded above: `u = log(1 + A)` and `z = log N_eff`. These are the
+names the sampler's internals and its diagnostics use -- `accept_z` and
+`step_z` in `fit$info` are the `z` block's -- while the draws come back on
+the scale with a meaning, as `A` and `N_eff[d]`.
+
+`A` and `N_eff` are shared across the demes by default, which is the fit
+presented below. `gc_control()` will give either one a per-deme version:
+`neff = "hierarchical"` draws each `z_d` from `N(mu, sigma^2)`, so `mu` and
+`sigma` are the mean and spread of the log effective size across demes, and
+`selection = "hierarchical"` draws each `u_d` from `N(mu_u, sigma_u^2)`,
+`mu_u` and `sigma_u` being the same two for the log growth advantage. Both
+spreads carry priors whose mode is at zero, so a per-deme version can
+collapse back onto the shared one rather than being held apart by the prior.
+`theta`, for its part, is given an `Exponential(rate)` prior with `rate`
+defaulting to the length of the observation window.
+
+The panel-level size is named for the structure that was fitted. Under the
+shared default there is one size and nothing to average over, so it comes
+back as `N_eff`, with its log as `log_N_eff`. Under
+`neff = "hierarchical"` the same slot instead holds the exponential of the
+mean *log* size, which describes a typical deme rather than any particular
+one, and is reported as `exp_mu` with `mu` beneath it. `sigma` is not a
+parameter under the shared default and is reported as `NA`.
+
+`N_lat` is an integer, because it counts gene copies, so the likelihood is
+piecewise constant in `N_eff`: two values that round to the same lattice give
+exactly the same model. Rounding is half-to-even, and the floor of 2 is there
+because a lattice of 0 or 1 has no interior for drift or selection to act
+on.
+
+
+The invariance is close but not exact: the full likelihood still shifts by
+about 0.6 nats between `M = 16` and `M = 32`, and 1.8 nats across the whole
+range from `M = 8` to `M = 64`. `M = 16` is the
+resolution the stored fit uses.
+
+### The shared-parameter model in full
+
+Collecting the above, with the defaults of `gc_control()`, for a panel of $D$
+demes observed over $T$ steps at $M$ steps per unit of time. One growth
+advantage, one effective size, one flow rate and one hazard serve the whole
+panel; each deme keeps its own arrival time and its own path.
+
+Priors, written on the scale the sampler moves:
+
+$$u = \log(1+A) \sim N(0, \tau^2), \qquad \tau = 1,$$
+$$z = \log N_{\mathrm{eff}} \sim N(\mu_0, s_0^2), \qquad \mu_0 = \log 15,\; s_0 = 1.5,$$
+$$\nu \sim \mathrm{HalfNormal}(0.02), \qquad
+  \theta \sim \mathrm{Exponential}(\mathrm{span}).$$
+
+Transforms onto the lattice:
+
+$$\alpha = e^{u/M} - 1, \qquad
+  N_{\mathrm{lat}} = \max\{2, \mathrm{round}(M e^{z})\}, \qquad
+  \lambda = \nu e^{z}, \qquad
+  p = 1 - e^{-\theta/M}.$$
+
+Then for each deme $d = 1, \dots, D$ independently, an arrival time, a
+founding count and a path:
+
+$$t^*_d \sim \mathrm{Geometric}(p) \;\text{ on } \{1, 2, \dots\}, \qquad
+  k_{d,0} = \dots = k_{d,\,t^*_d - 1} = 0,$$
+$$k_{d,\,t^*_d} \sim \mathrm{Poisson}(\lambda) \mid {\geq 1}, \qquad
+  k_{d,\,t^*_d:T} \sim \mathrm{WF}(\alpha, N_{\mathrm{lat}}, \lambda),$$
+
+where $\mathrm{WF}$ is one draw of the path given above: a
+$\mathrm{Binomial}(N_{\mathrm{lat}}, \psi(f_t, \alpha))$ step while the deme
+holds a copy and a $\mathrm{Poisson}(\lambda)$ re-entry while it is empty. The
+selection tilt is $\psi(f, \alpha) = f(1+\alpha) / (1 + \alpha f)$, the
+frequency written in the Binomial above: it carries $f$ upwards whenever
+$\alpha > 0$ and fixes $\psi(0,\alpha) = 0$, $\psi(1,\alpha) = 1$, so neither
+absence nor fixation is disturbed by selection.
+Finally each survey $j$ in deme $d$, taken at step $s_{dj}$ and typing
+$n_{dj}$ gene copies,
+
+$$x_{dj} \sim \mathrm{Binomial}\!\left(n_{dj},\; k_{d,\,s_{dj}}/N_{\mathrm{lat}}\right).$$
+
+Four details of that generative story are worth stating, because they are
+places the implementation could have cut a corner and does not.
+
+The arrival time is **not** a sampled quantity. It is summed out exactly in
+the same backward pass that evaluates the likelihood, so its posterior is a
+normalisation of a row already computed and carries no Monte-Carlo error.
+
+$\mathrm{Geometric}(p)$ is unbounded, so $P(t^* > T) = e^{-\theta \cdot
+\mathrm{span}}$ is positive: a deme may simply not have been reached yet, and
+a deme never seen positive is not forced to have been reached and then
+hidden.
+
+The founding draw is conditioned on being non-zero, while the re-entry draw
+is not -- an empty deme stays empty with probability $e^{-\lambda}$. Both are
+truncated at $N_{\mathrm{lat}}$ with the tail folded onto the last cell, so
+each row sums to one rather than leaking mass.
+
+For the running example $D = 16$, $M = 16$, $\mathrm{span} = 12$ years and so
+$T = 192$ steps.
+
+In the next sections we explain how to use the package to infer model parameters, including selection, effective population size, and importation time.
+
+## Data
+
+Input is one row per survey.
+
+```{r}
+d <- gc_example_data(M = 16)
+d
+```
+
+The window printed there is the default: `t0` sits one unit of time before
+the first survey. Where the window *opens* is a prior claim about the earliest
+possible arrival rather than anything the data say, so it is made at fit time
+instead -- see `lead_in` below.
+
+## Fitting
+
+Parameter posteriors can be drawn using a Metropolis-within-Gibbs scheme in which the true likelihood is evaluated exactly. An example fit output looks like this.
+
+```{r fit}
+stored <- gc_example_fit()
+fit <- stored$fit
+fit
+```
+
+To produce such a fit given data `d` with default priors we can run:
+
+```{r eval = FALSE}
+fit <- GCFit$new(d, chains = 4, iter = 4000, warmup = 2000, seed = 101,
+                 cores = 4, lead_in = 6 * 16, control = gc_control(selection = "shared"))
+```
+
+`lead_in` is the lead-in before the first survey, counted in steps, so
+`6 * 16` is six years at `M = 16` and puts `t0` in 2010. It is the earliest
+arrival the model will allow. A `t*` posterior piled up against `t0` is the sign that a lead-in is too short to hold the arrival it is being asked to date. `gc_control` allows users to modify priors and model hierarchical structure, see the appendix for a description of functionality; for default use, omit the argument.
+
+Once complete, one can plot parameter mcmc traces:
+
+```{r, fig.height = 5}
+gc_plot_trace(fit)
+```
+
+The same draws as histograms, with the chains kept apart. Disagreement
+between chains shows here as displaced humps, which a shared histogram hides.
+
+```{r, fig.height = 5}
+gc_plot_hist(fit)
+```
+
+Pairwise, to tell a ridge -- two parameters the data cannot separate -- from
+one parameter merely absorbing signal from another:
+
+```{r, fig.height = 6}
+gc_plot_pairs(fit)
+```
+
+Nothing here is a ridge, but the largest correlation is not negligible
+either: `r round(stats::cor(as.numeric(posterior::as_draws_matrix(fit$draws)[, "u"]), as.numeric(posterior::as_draws_matrix(fit$draws)[, "N_eff"])), 2)`
+between `u` and `N_eff`. With one effective size for the whole panel,
+selection and drift are inferred from the same sixteen trajectories and do
+trade against each other. Neither is unidentified, but the growth advantage
+should not be read as independent of the size.
+
+`N_eff` is the one effective size the whole panel shares, this being the
+default. `gc_control(neff = "hierarchical")` gives each deme its own instead,
+drawn from `N(mu, sigma^2)`; `sigma` then becomes a parameter, the panel
+level is reported as `exp_mu`, and `gc_plot_trace(fit, "N_eff")` has sixteen
+traces to show rather than one.
+
+### The growth advantage
+
+`u` is what the sampler moves, but `A = exp(u) - 1` is the quantity with a
+meaning: the proportional change in frequency per year that selection buys.
+
+```{r, fig.height = 3.6}
+gc_plot_hist(fit, "A", ncol = 1)
+```
+
+```{r}
+A <- as.numeric(posterior::as_draws_matrix(fit$draws)[, "A"])
+round(stats::quantile(A, c(.025, .05, .25, .5, .75, .95, .975)), 3)
+```
+
+```{r}
+c(`P(A > 0)` = mean(A > 0), `P(A > 0.25)` = mean(A > 0.25))
+```
+
+The posterior favours a positive advantage without excluding neutrality:
+about a sixth of its mass lies below zero. Two
+things to hold alongside that: every district here is one where C469Y was
+observed, and conditioning of that kind inflates apparent selection; and the
+flow term competes with selection to explain late-appearing demes, so `A` is
+not identified independently of `nu`.
+
+Acceptance rates and the guard counts are in `fit$info`. The `N_eff` bounds
+are rejections applied *before* the likelihood is evaluated: they stop a wild
+proposal allocating a vast lattice, and the rejections they generate are the
+negative feedback that keeps step-size adaptation stable.
+
+```{r}
+fit$info[, c("chain", "accept_z", "accept_u", "accept_nu", "guard_rejects")]
+```
+
+## Projections
+
+```{r project}
+pr <- stored$pr
+pr
+```
+
+```{r eval = FALSE}
+pr <- fit$project(horizon = 3, n_draws = 200, n_paths = 400,
+                  thresholds = c(0.01, 0.05, 0.10))
+```
+
+`pr$curves` is one row per deme and step.
+
+```{r}
+names(pr$curves)
+```
+
+Inside the window these are *smoothed*: every survey in the deme, later ones
+included, informs the state at each step. Beyond the last survey the same
+kernel propagates the smoothed lattice distribution forward.
+
+```{r}
+gc_plot_frequency(pr)
+```
+
+Two distinctions in that table are easy to lose and both matter.
+
+**`f_q*` are predictive; `p_present_q*` are not.** The frequency quantiles
+integrate the parameters, the latent path and the Wright-Fisher noise, so
+`f_q97.5` is a bound on the frequency itself. The presence quantiles hold the
+parameters out: they say how well the data pin a probability, not how
+uncertain the outcome is. Presence is a Bernoulli whose probability is itself
+uncertain, and the across-draw spread is only part of that variance.
+
+**The `f_*` columns are unconditional.** The atom at zero carries
+`1 - p_present`, so a quantile below that level is exactly zero, and a band
+resting on zero means absence is the likelier state rather than a frequency
+near zero.
+
+```{r}
+gc_plot_present(pr)
+```
+
+`P(present)` is not monotone. It dips between surveys and recovers at each
+non-zero one, because a deme can go extinct and be re-seeded. Under a single
+introduction it could only ever rise.
+
+Exceedance is computed on the lattice for every draw rather than from a
+binned density: the threshold falls between lattice points and the binning
+error does not average out.
+
+```{r}
+gc_plot_exceed(pr)
+```
+
+## Introduction times
+
+Three times, and they are not interchangeable.
+
+`t*` is a parameter, obtained **analytically**: the backward table is already
+built for the likelihood, so its posterior is a normalisation of a row that
+has already been computed, with no Monte-Carlo error at all.
+
+`T_first` is the first step the variant is present. In this model the
+founding event deposits a copy at `t*` and nothing is present before it, so
+`T_first` is identically `t*`. Computing it from sampled paths anyway is a
+check that the two routes agree.
+
+`T_est` is the start of the excursion that produced the first count anyone
+actually saw: walk back from the first survey with a non-zero reading until
+the deme is empty. It is a path functional -- no marginal of the smoother
+says when that excursion began -- so it needs sampled paths, and it is the
+only expensive output here. It is undefined in a deme that was never
+detected, there being no observed lineage to date, and it does not condition
+on survival: the lineage that was seen need not be the one still present at
+the end.
+
+```{r}
+gc_plot_times(pr, "cdf")
+```
+
+Both curves reach one, and both stop at the dashed line -- the first
+detection. That line is a hard bound: the excursion carrying the detected
+copy must have begun before the copy was seen.
+
+The gap between the curves is the span over which earlier arrivals came and
+went before the one that was eventually caught. Where the two nearly
+coincide, as in Lamwo, the variant was detected soon after it arrived and
+there was no room for turnover. Where purple stays flat for years while
+green climbs, as in Arua or Rukiga, the variant very probably arrived long
+before the lineage that was actually seen, and whatever came first died out.
+
+The two never-detected demes have no purple curve at all.
+
+The same two quantities as densities, which show where the mass actually is
+rather than where it has accumulated. Densities are per unit time, so both
+are on one scale whatever `M` is, and each integrates to one in a deme that
+was detected.
+
+```{r, fig.height = 7.5}
+gc_plot_times(pr, "pmf")
+```
+
+Multiple modes in a `T_est` density are successive extinction and
+recolonisation cycles, each one a plausible era for the founding of the
+lineage that was detected.
+
+Every sampled path carries both times, so their joint distribution comes for
+free and is kept in `pr$joint`. Its diagonal is the probability that the
+lineage which was detected is the one that originally arrived -- a quantity
+neither marginal can give, since both are compatible with either history.
+`gc_plot_joint()` draws it.
+
+```{r}
+J <- pr$joint
+share <- vapply(seq_along(pr$demes$deme),
+                function(k) sum(diag(J[, , k])), numeric(1)) /
+         pmax(pr$demes$p_alive_T, 1e-12)
+round(sort(stats::setNames(share, pr$demes$deme), decreasing = TRUE), 2)
+```
+
+So in most demes the variant that was detected is **not** descended from the
+first arrival: the original lineage died out and a later one founded what was
+eventually seen.
+
+## Cost
+
+The fit is the expensive part; everything after it is seconds.
+
+| | |
+|---|---|
+| one likelihood evaluation, 16 demes, `M = 16`, `T = 192` | 10 ms |
+| 4 x 4000 sweeps, 4 cores | `r sprintf("%.0f s", attr(fit$info, "wall"))` |
+| projection, 200 draws | ~9 s |
+| path sampling, 400 paths per deme per draw | ~45 s |
+
+The fit time is read back off the stored object rather than written down, so
+the table cannot drift away from the fit the rest of this vignette shows. It
+is one run on one laptop, and it moves with the machine and with whatever
+else that machine was doing at the time; the per-evaluation cost above is the
+figure to scale from.
+
+`n_paths = 0` skips the path sampler, which is the fast path: `t*` is
+analytic and costs nothing, and `T_est` is the only expensive output.
+
+Cost grows as the square of the lattice, so `M = 32` is about five times
+`M = 16`, and the per-sweep time is lumpy: the posterior for `N_eff` has a
+long right tail, and the largest draws cost many times what the median one
+does. Asking for per-deme sizes with `gc_control(neff = "hierarchical")`
+makes that worse, because each deme then draws its own lattice and a single
+wide one slows the whole sweep.
+
+The `N_eff` guard rejects about a tenth of the `z` proposals, and most of
+that is at the **lower** bound -- 0.086 against 0.015 at the upper one. The
+adapted step is 1.45 against a posterior spread of 0.40 in `log N_eff`, so a
+step that is efficient for sampling routinely overshoots below `N_eff = 2`. Rejecting those before the likelihood
+is evaluated is what stops a wild proposal allocating a vast lattice, and it
+costs nothing, because the rejection happens before any work.
+
+## Appendix: `gc_control()`
+
+`gc_control()` carries everything about the model that is not the data: the
+priors, which parameters are shared across demes and which are not, what
+`t*` means, and the sampler's own step sizes. It returns a plain list, named
+exactly as its arguments are, so a setting can be read back under the name it
+was passed and one object can serve several fits.
+
+```{r}
+ctl <- gc_control(selection = "hierarchical", mu_mean = log(30), tau = 0.5)
+ctl$mu_mean
+```
+
+```{r eval = FALSE}
+fit <- GCFit$new(d, chains = 4, iter = 4000, cores = 4, lead_in = 6 * 16,
+                 control = ctl)
+```
+
+Anything left unnamed keeps its default, so `gc_control()` on its own is the
+model this vignette presents. The structural arguments come first because
+they decide which of the prior arguments mean anything at all.
+
+| argument | what it sets | active in |
+|---|---|---|
+| `neff` | one effective size for the panel (`"shared"`) or one per deme shrunk toward `mu` (`"hierarchical"`) | always |
+| `selection` | one growth advantage for the panel (`"shared"`) or one per deme shrunk toward `mu_u` (`"hierarchical"`) | always |
+| `tstar` | `"geometric"`, so `t*` may postdate the record, or `"uniform"` over the window | always |
+| `founding` | what `t*` is: the first non-zero draw (`"conditional"`), a single copy (`"one"`), or the onset of the arrival rate (`"rate"`) | always |
+| `tau` | `N(0, tau^2)` on `u = log(1 + A)` | always, but on different things: the shared `u`, or `mu_u` under `"hierarchical"` |
+| `u_bounds` | rejection bounds on `u` | always |
+| `nu_scale` | `HalfNormal(nu_scale)` on the flow rate `nu` | always |
+| `lognu_bounds` | rejection bounds on `log nu` | always |
+| `mu_mean`, `mu_sd` | `N(mu_mean, mu_sd^2)` | on the single `z = log N_eff` when `neff = "shared"`, on `mu` when `"hierarchical"` |
+| `neff_bounds` | rejection bounds on `N_eff`, applied before the likelihood | always |
+| `sigma2_shape`, `sigma2_rate` | `InvGamma` on `sigma^2`, the between-deme variance of `z` | **only** `neff = "hierarchical"` |
+| `u_sigma_scale`, `u_sigma_df` | half-`t` on `sigma_u`, the between-deme spread of `u` | **only** `selection = "hierarchical"` |
+| `tstar_rate` | rate of the `Exponential` prior on `theta`; `NULL` uses the window span | **only** `tstar = "geometric"` |
+| `lntheta_bounds` | rejection bounds on `log theta` | **only** `tstar = "geometric"` |
+| `target` | acceptance rate the warm-up adaptation aims at | always |
+| `step_z`, `step_u`, `step_nu` | starting random-walk scales | always |
+
+Three things that table is trying to make plain.
+
+**Four prior arguments are inert unless you ask for the structure they
+belong to.** Setting `sigma2_shape` under the default `neff = "shared"`
+changes nothing, because there is no between-deme variance to put a prior
+on; the same goes for `u_sigma_scale` away from
+`selection = "hierarchical"`, and for `tstar_rate` under
+`tstar = "uniform"`. Nothing warns you, so it is worth checking
+`fit$control` against what you meant.
+
+**The bounds are rejections, not densities.** A proposal outside them is
+refused before the likelihood is evaluated, which is what stops a wild draw
+from allocating a vast lattice, and the refusals are also the negative
+feedback that keeps step-size adaptation stable. They are not part of the
+model in the way the priors are, and a posterior pressed against one is a
+sign the bound is wrong rather than that the data have spoken.
+
+**A parameter the chosen structure does not have is either absent from
+`fit$draws` or present and `NA`**, and which of the two depends on the
+parameter. `sigma` and `log_sigma2` are always there, and are `NA` unless
+`neff = "hierarchical"`. Everything else comes and goes:
+
+| in `fit$draws` only when | variables |
+|---|---|
+| `neff = "shared"` | `N_eff`, `log_N_eff` (otherwise `exp_mu`, `mu`) |
+| `tstar = "geometric"` | `theta`, `p_beyond_baseline` |
+| `selection = "hierarchical"` | `u[d]`, `A[d]`, `mu_u`, `sigma_u` |
+
+`fit$summary()` and the plotting functions consult `fit$control` and show
+only what the fit actually has, which is why the default reports six
+variables and never an empty `sigma` panel. `posterior::variables(fit$draws)`
+is the way to see the full set.
+
+Defaults, with their justifications, are on the help page: `?gc_control`.

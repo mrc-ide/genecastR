@@ -1,0 +1,5 @@
+name	user	system	elapsed
+GCData	0.003	0.001	0.004	
+GCFit	31.335	 0.127	31.496	
+gc_example_fit	0.053	0.004	0.055	
+gc_waic	6.001	0.040	6.050	

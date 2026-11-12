@@ -1,0 +1,12 @@
+## No BLAS, no LAPACK, no Fortran.
+##
+## The kernels here are dense matrix-vector products on an (N_lat+1) lattice,
+## with N_lat of order 200.  At that size a hand-written loop is competitive
+## with a BLAS call and avoids linking against R's Fortran-built BLAS, which
+## would require $(FLIBS) and therefore the separate gfortran toolchain.
+## Keeping the package Fortran-free is worth more than a GEMM that is not on
+## the critical path.  If profiling later finds a genuinely GEMM-shaped hot
+## spot, add $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) together -- never BLAS
+## without FLIBS, which R CMD check flags as non-portable.
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS)
+PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)

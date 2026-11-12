@@ -1,0 +1,227 @@
+
+R version 4.6.2 (2026-10-29) -- "Diversified Portfolio"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "GeneCastR"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> base::assign(".ExTimings", "GeneCastR-Ex.timings", pos = 'CheckExEnv')
+> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
+> base::assign(".format_ptime",
++ function(x) {
++   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
++   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
++   options(OutDec = '.')
++   format(x[1L:3L], digits = 7L)
++ },
++ pos = 'CheckExEnv')
+> 
+> ### * </HEADER>
+> library('GeneCastR')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("GCData")
+> ### * GCData
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: GCData
+> ### Title: Survey panel for the Wright-Fisher introduction model
+> ### Aliases: GCData
+> 
+> ### ** Examples
+> 
+> d <- gc_example_data()
+16 row(s) with n == 0 dropped (no information).
+> d
+<GCData>
+  demes    : 16 (Agago, Amolatar, Arua, ...)
+  surveys  : 96 (42 non-zero)
+  window   : 2015 to 2022   M = 16, T = 112 steps
+  never positive: 2 deme(s) -- Jinja, Kanungu
+> head(d$surveys)
+   deme time  x  n step          f         lo         hi
+1 Agago 2016  0 30   16 0.00000000 0.00000000 0.06151672
+2 Agago 2017  2 44   32 0.04545455 0.01315698 0.12016535
+3 Agago 2018  1 31   48 0.03225806 0.00570508 0.11934267
+4 Agago 2019 10 47   64 0.21276596 0.12864448 0.32229633
+5 Agago 2020 33 79   80 0.41772152 0.32968467 0.51014016
+6 Agago 2021  8 50   96 0.16000000 0.08966170 0.25863309
+> d$cut
+    Agago  Amolatar      Arua     Hoima     Jinja   Kaabong   Kanungu Kapchorwa 
+       32        32        96        80        NA        48        NA        96 
+   Kasese   Katakwi    Koboko      Kole     Lamwo   Mubende    Rukiga    Tororo 
+      112        48        80        16        16        32       112        96 
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("GCData", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("GCFit")
+> ### * GCFit
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: GCFit
+> ### Title: A fitted Wright-Fisher introduction model
+> ### Aliases: GCFit
+> 
+> ### ** Examples
+> 
+> ## No test: 
+> d <- gc_example_data()
+16 row(s) with n == 0 dropped (no information).
+> fit <- GCFit$new(d, chains = 2, iter = 400)
+chain 1/2 ...
+chain 2/2 ...
+> fit$summary()
+           variable        mean      median         sd        mad           q5
+1                 u  0.23248465  0.23538133 0.17819215 0.14431781 -0.075073154
+2                 A  0.28156496  0.26539121 0.22566728 0.17852698 -0.072280921
+3                nu  0.03050792  0.03001967 0.01261138 0.01296370  0.011436143
+4             N_eff 13.73123497 13.37674804 5.21057877 5.07476765  7.208386358
+5             theta  0.44772731  0.40675191 0.18866584 0.17494093  0.207448320
+6 p_beyond_baseline  0.07887816  0.05800283 0.07241550 0.06414918  0.002700932
+          q95     rhat  ess_bulk  ess_tail
+1  0.51703124 1.012359 117.23054 135.83582
+2  0.67704152 1.010992 117.23054 135.83582
+3  0.05478897 1.020923  92.68029 107.34748
+4 23.06385345 1.019588  82.21735 135.47525
+5  0.84572426 1.020838  93.10115  88.40859
+6  0.23406926 1.007729  93.10115  80.10460
+> ## End(No test)
+> 
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("GCFit", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("gc_example_fit")
+> ### * gc_example_fit
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: gc_example_fit
+> ### Title: The fitted Ugandan panel
+> ### Aliases: gc_example_fit
+> 
+> ### ** Examples
+> 
+> z <- gc_example_fit()
+> z$fit$summary()
+           variable       mean      median         sd        mad          q5
+1                 u  0.1375260  0.14945308 0.15813989 0.15224135 -0.14208216
+2                 A  0.1615018  0.16119899 0.17823550 0.17591223 -0.13245001
+3                nu  0.0265426  0.02545634 0.01129517 0.01128505  0.01111783
+4             N_eff 16.8983665 15.60015481 7.05181283 6.21397602  7.92108272
+5             theta  0.1920503  0.18038980 0.06743062 0.05635475  0.10633205
+6 p_beyond_baseline  0.1280804  0.11478694 0.08065060 0.07819712  0.02065590
+          q95     rhat  ess_bulk  ess_tail
+1  0.37045011 1.006296  877.1070  982.3600
+2  0.44838643 1.006348  877.1070  982.3600
+3  0.04715443 1.003401  903.1849 1208.9174
+4 30.05398130 1.005038  865.5874  890.3399
+5  0.32331291 1.004651 1199.4609 1561.0199
+6  0.27915598 1.004651 1199.4609 1561.0199
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("gc_example_fit", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("gc_waic")
+> ### * gc_waic
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: gc_waic
+> ### Title: Widely applicable information criterion
+> ### Aliases: gc_waic
+> 
+> ### ** Examples
+> 
+> ## No test: 
+> z <- gc_example_fit()
+> gc_waic(z$fit)
+$waic
+[1] 320.225
+
+$elpd
+[1] -160.1125
+
+$lppd
+[1] -157.8356
+
+$p_waic
+[1] 2.276912
+
+$se
+[1] 57.07881
+
+$n_draws
+[1] 500
+
+$pointwise
+        deme       lppd     p_waic       elpd
+1      Agago -22.232648 0.20060339 -22.433252
+2   Amolatar  -5.140830 0.08742021  -5.228251
+3       Arua  -7.690191 0.01209896  -7.702290
+4      Hoima  -8.312989 0.43947561  -8.752465
+5      Jinja  -1.656640 0.19828723  -1.854927
+6    Kaabong -15.796536 0.05102569 -15.847562
+7    Kanungu  -1.554694 0.16361734  -1.718311
+8  Kapchorwa  -5.083774 0.03530492  -5.119079
+9     Kasese  -6.764237 0.08320309  -6.847441
+10   Katakwi -15.526684 0.42222842 -15.948913
+11    Koboko  -6.740936 0.11800470  -6.858941
+12      Kole -19.073236 0.18593938 -19.259176
+13     Lamwo -23.649573 0.17883678 -23.828410
+14   Mubende  -7.218181 0.06127089  -7.279452
+15    Rukiga  -3.436270 0.02086390  -3.457134
+16    Tororo  -7.958155 0.01873108  -7.976886
+
+> ## End(No test)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("gc_waic", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  37.669 0.187 37.909 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

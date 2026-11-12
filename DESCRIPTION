@@ -1,31 +1,39 @@
-Package: genecastR
-Type: Package
-Title: Estimate allele frequency trajectories under selection from time series data
-Version: 1.0.3
-Authors@R: c(
-    person("Bob", "Verity", email = "r.verity@imperial.ac.uk", role = c("aut", "cre"))
-    )
-Description: A package for estimating the strength of selection from allele prevalence 
-    data observed over time. Uses a hidden Markov model and Bayesian MCMC to infer and 
-    predict allele frequency trajectories under genetic drift. Also includes tools to 
-    support study design, such as sample size and power calculations.
+Package: GeneCastR
+Title: Introduction Time and Spread of Genetic Variants Under Wright-Fisher Dynamics
+Version: 0.0.0.9000
+Authors@R:
+    person("Michael", "Whitehouse", email = "michael.whitehouse@imperial.ac.uk",
+           role = c("aut", "cre"))
+Description: Fits a Wright-Fisher model with genic selection and recurrent
+    gene flow to panels of allele-frequency surveys, with optional per-deme
+    hierarchies over the growth advantage and the effective size, and reports
+    projected frequencies, presence and exceedance probabilities, and
+    posteriors over the introduction time and the founding time of the
+    lineage that was detected. The latent allele count is held on a lattice, so the
+    likelihood is evaluated exactly by a forward-backward pass with no
+    particle approximation, and the introduction time is marginalised
+    analytically.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.3.2
-Imports: 
-    dplyr,
-    epitools,
-    ggplot2,
-    progress,
-    tidyr,
-    drjacoby,
-    RColorBrewer,
-    MASS
-Suggests: 
-    testthat (>= 3.0.0)
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.1)
+Imports:
+    R6,
+    Rcpp (>= 1.0.10),
+    parallel,
+    posterior (>= 1.5.0),
+    rlang (>= 1.0.0),
+    stats,
+    utils
+LinkingTo:
+    Rcpp
+Suggests:
+    ggplot2 (>= 3.4.0),
+    scales,
+    testthat (>= 3.0.0),
+    knitr,
+    markdown
 Config/testthat/edition: 3
-Remotes:
-    mrc-ide/drjacoby@v1.5.4
-Depends: 
-    R (>= 2.10)
+VignetteBuilder: knitr
+Config/roxygen2/version: 8.1.1

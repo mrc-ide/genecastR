@@ -219,7 +219,7 @@ Each curve climbs to one and stops at the dashed line, the first positive
 survey. That line is a hard limit: whatever was detected must have started
 before it was detected.
 
-The **gap between the curves is turnover**. Where they nearly coincide, the
+Where they nearly coincide, the
 marker was found soon after it arrived. Where the green curve climbs years
 before the purple one, the marker was probably present long before the
 lineage that was caught, and whatever came first died out. Sites never found

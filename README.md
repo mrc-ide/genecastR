@@ -70,7 +70,8 @@ from <https://mac.r-project.org/openmp/> first.
 
 ## Tutorials
 
-Start here for a quickstart:
+Start here for a quickstart -- readable here without installing
+anything, at [docs/quickstart.md](docs/quickstart.md), or from R with:
 
 ```r
 vignette("GeneCastRQuickstart", package = "GeneCastR")

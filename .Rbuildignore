@@ -9,3 +9,4 @@ R_ignore/
 ^\.gitignore$
 ^figure$
 ^vignettes/.*\.html$
+^docs$

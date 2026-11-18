@@ -3,3 +3,10 @@
 .RData
 .Ruserdata
 ignore/
+src/*.o
+src/*.so
+src/*.dll
+*.Rcheck
+*.tar.gz
+figure/
+inst/doc/

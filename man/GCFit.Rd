@@ -64,6 +64,7 @@ rejections and run time.}
   control = gc_control(),
   cores = 1L,
   lead_in = NULL,
+  progress = interactive(),
   quiet = FALSE
 )}
     \if{html}{\out{</div>}}
@@ -88,6 +89,17 @@ entertain: a three-year lead-in at \code{M = 16} is \code{lead_in = 3 * 16}.
 The default, \code{NULL}, keeps whatever window \code{data} was built with.
 Any other value re-anchors the panel, rebuilding the \link{GCData}; the
 window actually fitted is always \code{fit$data}.}
+      \item{\code{progress}}{Per-chain progress reporting. \code{TRUE} prints about
+twenty lines per chain, a single positive number sets the sweeps
+between lines, and \code{FALSE} prints none; the default reports only in
+an interactive session, so checks and knitted documents stay clean.
+The lines are appended rather than rewritten in place and interleave
+across chains, because forked chains share one output stream -- an
+in-place bar would have them overwriting each other. \code{quiet}
+overrides this. Note that output from forked workers does not reach
+the console in some front ends, RStudio among them, and a socket
+cluster (the Windows path) discards it entirely; \code{cores = 1} always
+reports.}
       \item{\code{quiet}}{Suppress progress messages.}
     }
     \if{html}{\out{</div>}}

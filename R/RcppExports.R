@@ -148,13 +148,17 @@ gc_project_pt <- function(Z, U, NU, M, T, H, demes, thresholds, nbins, founding 
 #' @param prior Named list of prior settings.
 #' @param target Acceptance rate the adaptation aims at.
 #' @param founding `0` for a single copy at `t*`, `1` for a Poisson draw.
+#' @param chain Chain number, used only to label progress lines.
+#' @param refresh Sweeps between progress lines; `0` prints nothing. Lines
+#'   are appended rather than rewritten in place, because forked chains
+#'   share one output stream.
 #' @return A list with the draws, the acceptance rates, the final step sizes
 #'   and the count of proposals rejected by the bounds before any likelihood
 #'   was evaluated.
 #' @keywords internal
 #' @export
-gc_mwg_run <- function(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding = 0L, tstar_p = -1.0, shared = FALSE, u_mode = 0L, tstar_negbin = FALSE, tstar_tmin = as.integer( c()), tstar_mu = as.numeric( c()), tstar_r0 = 1.0, tstar_shape_rate = 1.0, tstar_learn_shape = TRUE, tstar_learn_mean = FALSE, tstar_mu0 = 0.0, tstar_logmu_sd = 0.5) {
-    .Call(`_GeneCastR_gc_mwg_run`, demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode, tstar_negbin, tstar_tmin, tstar_mu, tstar_r0, tstar_shape_rate, tstar_learn_shape, tstar_learn_mean, tstar_mu0, tstar_logmu_sd)
+gc_mwg_run <- function(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding = 0L, tstar_p = -1.0, shared = FALSE, u_mode = 0L, tstar_negbin = FALSE, tstar_tmin = as.integer( c()), tstar_mu = as.numeric( c()), tstar_r0 = 1.0, tstar_shape_rate = 1.0, tstar_learn_shape = TRUE, tstar_learn_mean = FALSE, tstar_mu0 = 0.0, tstar_logmu_sd = 0.5, chain = 1L, refresh = 0L) {
+    .Call(`_GeneCastR_gc_mwg_run`, demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode, tstar_negbin, tstar_tmin, tstar_mu, tstar_r0, tstar_shape_rate, tstar_learn_shape, tstar_learn_mean, tstar_mu0, tstar_logmu_sd, chain, refresh)
 }
 
 #' Introduction and establishment times, from sampled paths

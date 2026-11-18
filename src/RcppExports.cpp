@@ -133,8 +133,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // gc_mwg_run
-Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm, Rcpp::NumericVector z0, double u0, double nu0, double step_z, double step_u, double step_nu, Rcpp::List prior, double target, int founding, double tstar_p, bool shared, int u_mode, bool tstar_negbin, Rcpp::IntegerVector tstar_tmin, Rcpp::NumericVector tstar_mu, double tstar_r0, double tstar_shape_rate, bool tstar_learn_shape, bool tstar_learn_mean, double tstar_mu0, double tstar_logmu_sd);
-RcppExport SEXP _GeneCastR_gc_mwg_run(SEXP demesSEXP, SEXP MSEXP, SEXP TSEXP, SEXP n_iterSEXP, SEXP warmSEXP, SEXP z0SEXP, SEXP u0SEXP, SEXP nu0SEXP, SEXP step_zSEXP, SEXP step_uSEXP, SEXP step_nuSEXP, SEXP priorSEXP, SEXP targetSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP sharedSEXP, SEXP u_modeSEXP, SEXP tstar_negbinSEXP, SEXP tstar_tminSEXP, SEXP tstar_muSEXP, SEXP tstar_r0SEXP, SEXP tstar_shape_rateSEXP, SEXP tstar_learn_shapeSEXP, SEXP tstar_learn_meanSEXP, SEXP tstar_mu0SEXP, SEXP tstar_logmu_sdSEXP) {
+Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm, Rcpp::NumericVector z0, double u0, double nu0, double step_z, double step_u, double step_nu, Rcpp::List prior, double target, int founding, double tstar_p, bool shared, int u_mode, bool tstar_negbin, Rcpp::IntegerVector tstar_tmin, Rcpp::NumericVector tstar_mu, double tstar_r0, double tstar_shape_rate, bool tstar_learn_shape, bool tstar_learn_mean, double tstar_mu0, double tstar_logmu_sd, int chain, int refresh);
+RcppExport SEXP _GeneCastR_gc_mwg_run(SEXP demesSEXP, SEXP MSEXP, SEXP TSEXP, SEXP n_iterSEXP, SEXP warmSEXP, SEXP z0SEXP, SEXP u0SEXP, SEXP nu0SEXP, SEXP step_zSEXP, SEXP step_uSEXP, SEXP step_nuSEXP, SEXP priorSEXP, SEXP targetSEXP, SEXP foundingSEXP, SEXP tstar_pSEXP, SEXP sharedSEXP, SEXP u_modeSEXP, SEXP tstar_negbinSEXP, SEXP tstar_tminSEXP, SEXP tstar_muSEXP, SEXP tstar_r0SEXP, SEXP tstar_shape_rateSEXP, SEXP tstar_learn_shapeSEXP, SEXP tstar_learn_meanSEXP, SEXP tstar_mu0SEXP, SEXP tstar_logmu_sdSEXP, SEXP chainSEXP, SEXP refreshSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -164,7 +164,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type tstar_learn_mean(tstar_learn_meanSEXP);
     Rcpp::traits::input_parameter< double >::type tstar_mu0(tstar_mu0SEXP);
     Rcpp::traits::input_parameter< double >::type tstar_logmu_sd(tstar_logmu_sdSEXP);
-    rcpp_result_gen = Rcpp::wrap(gc_mwg_run(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode, tstar_negbin, tstar_tmin, tstar_mu, tstar_r0, tstar_shape_rate, tstar_learn_shape, tstar_learn_mean, tstar_mu0, tstar_logmu_sd));
+    Rcpp::traits::input_parameter< int >::type chain(chainSEXP);
+    Rcpp::traits::input_parameter< int >::type refresh(refreshSEXP);
+    rcpp_result_gen = Rcpp::wrap(gc_mwg_run(demes, M, T, n_iter, warm, z0, u0, nu0, step_z, step_u, step_nu, prior, target, founding, tstar_p, shared, u_mode, tstar_negbin, tstar_tmin, tstar_mu, tstar_r0, tstar_shape_rate, tstar_learn_shape, tstar_learn_mean, tstar_mu0, tstar_logmu_sd, chain, refresh));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -209,7 +211,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_GeneCastR_gc_tstar_pt", (DL_FUNC) &_GeneCastR_gc_tstar_pt, 8},
     {"_GeneCastR_gc_band_stats", (DL_FUNC) &_GeneCastR_gc_band_stats, 3},
     {"_GeneCastR_gc_project_pt", (DL_FUNC) &_GeneCastR_gc_project_pt, 12},
-    {"_GeneCastR_gc_mwg_run", (DL_FUNC) &_GeneCastR_gc_mwg_run, 26},
+    {"_GeneCastR_gc_mwg_run", (DL_FUNC) &_GeneCastR_gc_mwg_run, 28},
     {"_GeneCastR_gc_times_pt", (DL_FUNC) &_GeneCastR_gc_times_pt, 11},
     {"_GeneCastR_gc_toolchain", (DL_FUNC) &_GeneCastR_gc_toolchain, 0},
     {NULL, NULL, 0}

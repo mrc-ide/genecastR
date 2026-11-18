@@ -30,7 +30,9 @@ gc_mwg_run(
   tstar_learn_shape = TRUE,
   tstar_learn_mean = FALSE,
   tstar_mu0 = 0,
-  tstar_logmu_sd = 0.5
+  tstar_logmu_sd = 0.5,
+  chain = 1L,
+  refresh = 0L
 )
 }
 \arguments{
@@ -55,6 +57,12 @@ gc_mwg_run(
 \item{target}{Acceptance rate the adaptation aims at.}
 
 \item{founding}{\code{0} for a single copy at \verb{t*}, \code{1} for a Poisson draw.}
+
+\item{chain}{Chain number, used only to label progress lines.}
+
+\item{refresh}{Sweeps between progress lines; \code{0} prints nothing. Lines
+are appended rather than rewritten in place, because forked chains
+share one output stream.}
 }
 \value{
 A list with the draws, the acceptance rates, the final step sizes

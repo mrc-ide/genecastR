@@ -354,10 +354,22 @@ GCFit <- R6::R6Class(
     #'   The default, `NULL`, keeps whatever window `data` was built with.
     #'   Any other value re-anchors the panel, rebuilding the [GCData]; the
     #'   window actually fitted is always `fit$data`.
+    #' @param progress Per-chain progress reporting. `TRUE` prints about
+    #'   twenty lines per chain, a single positive number sets the sweeps
+    #'   between lines, and `FALSE` prints none; the default reports only in
+    #'   an interactive session, so checks and knitted documents stay clean.
+    #'   The lines are appended rather than rewritten in place and interleave
+    #'   across chains, because forked chains share one output stream -- an
+    #'   in-place bar would have them overwriting each other. `quiet`
+    #'   overrides this. Note that output from forked workers does not reach
+    #'   the console in some front ends, RStudio among them, and a socket
+    #'   cluster (the Windows path) discards it entirely; `cores = 1` always
+    #'   reports.
     #' @param quiet Suppress progress messages.
     initialize = function(data, chains = 4L, iter = 3000L, warmup = NULL,
                           seed = 1L, control = gc_control(), cores = 1L,
-                          lead_in = NULL, quiet = FALSE) {
+                          lead_in = NULL, progress = interactive(),
+                          quiet = FALSE) {
       if (!inherits(data, "GCData")) stop("`data` must be a GCData", call. = FALSE)
       if (!is.null(lead_in)) data <- private$reanchor(data, lead_in, quiet)
       chains <- as.integer(chains); iter <- as.integer(iter)
@@ -366,6 +378,18 @@ GCFit <- R6::R6Class(
       warmup <- if (is.null(warmup)) iter %/% 3L else as.integer(warmup)
       if (warmup < 0L || warmup >= iter)
         stop("`warmup` must be in [0, iter)", call. = FALSE)
+
+      ## TRUE asks for roughly twenty lines a chain; a number is the sweeps
+      ## between them.  Zero prints nothing, which is what `quiet` forces.
+      ## Validated before `quiet` is applied: a malformed argument is an
+      ## error whether or not the output would have been suppressed.
+      refresh <- if (isTRUE(progress)) max(1L, iter %/% 20L)
+        else if (isFALSE(progress) || is.null(progress)) 0L
+        else if (is.numeric(progress) && length(progress) == 1L &&
+                 is.finite(progress) && progress >= 1) as.integer(progress)
+        else stop("`progress` must be TRUE, FALSE, or sweeps between lines.",
+                  call. = FALSE)
+      if (quiet) refresh <- 0L
 
       D <- data$n_demes
       dd <- data$deme_data()
@@ -409,7 +433,8 @@ GCFit <- R6::R6Class(
           tstar_learn_shape = isTRUE(nb && ts$learn_shape),
           tstar_learn_mean = isTRUE(nb && ts$learn_mean),
           tstar_mu0 = if (nb) ts$mu_step[1L] else 0,
-          tstar_logmu_sd = control$tstar_logmean_sd)
+          tstar_logmu_sd = control$tstar_logmean_sd,
+          chain = i, refresh = refresh)
       }
 
       cores <- max(1L, min(as.integer(cores), chains))

@@ -54,6 +54,10 @@ static inline int nlat_of(double z, int M) {
 //' @param prior Named list of prior settings.
 //' @param target Acceptance rate the adaptation aims at.
 //' @param founding `0` for a single copy at `t*`, `1` for a Poisson draw.
+//' @param chain Chain number, used only to label progress lines.
+//' @param refresh Sweeps between progress lines; `0` prints nothing. Lines
+//'   are appended rather than rewritten in place, because forked chains
+//'   share one output stream.
 //' @return A list with the draws, the acceptance rates, the final step sizes
 //'   and the count of proposals rejected by the bounds before any likelihood
 //'   was evaluated.
@@ -74,7 +78,8 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
                       bool tstar_learn_shape = true,
                       bool tstar_learn_mean = false,
                       double tstar_mu0 = 0.0,
-                      double tstar_logmu_sd = 0.5) {
+                      double tstar_logmu_sd = 0.5,
+                      int chain = 1, int refresh = 0) {
 
   const int D = demes.size();
   if (z0.size() != D) Rcpp::stop("z0 must have one entry per deme");
@@ -451,6 +456,17 @@ Rcpp::List gc_mwg_run(Rcpp::List demes, int M, int T, int n_iter, int warm,
                            ? std::exp(l_mu) : NA_REAL;
 
     if ((it & 255) == 0) Rcpp::checkUserInterrupt();
+
+    // One appended line per chain per refresh, not an in-place bar: under
+    // mclapply four forked children share this stream, and anything using
+    // \r to rewrite a line would have them overwriting each other.  Lines
+    // therefore interleave in whatever order the chains reach a checkpoint.
+    if (refresh > 0 && ((it + 1) % refresh == 0 || it + 1 == n_iter)) {
+      Rprintf("chain %d: %6d / %d (%3.0f%%) %s\n", chain, it + 1, n_iter,
+              100.0 * (double)(it + 1) / (double)n_iter,
+              (it < warm) ? "warm-up" : "sampling");
+      R_FlushConsole();
+    }
   }
 
   const double post = (double)(n_iter - warm);   // > 0: warm < n_iter

@@ -10,3 +10,4 @@ src/*.dll
 *.tar.gz
 figure/
 inst/doc/
+.DS_Store

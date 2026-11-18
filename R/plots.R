@@ -628,3 +628,110 @@ plot.GCProjection <- function(x, ...) gc_plot_frequency(x, ...)
 #' @param ... Passed to [gc_plot_trace].
 #' @export
 plot.GCFit <- function(x, ...) gc_plot_trace(x, ...)
+
+
+## Facet order and labels for a GCData, which unlike a GCProjection has no
+## per-deme summary table -- `$demes` is a bare character vector, so the
+## non-zero counts are recomputed from the surveys here.  Orderings that
+## need posterior quantities are not available without a fit.
+.data_panels <- function(sv, by = c("name", "n_nonzero", "first")) {
+  by <- match.arg(by)
+  s <- split(sv, sv$deme)
+  tab <- data.frame(
+    deme      = names(s),
+    n_surveys = vapply(s, nrow, 1L),
+    n_nonzero = vapply(s, function(z) sum(z$x > 0L), 1L),
+    first     = vapply(s, function(z) {
+                  nz <- z$time[z$x > 0L]
+                  if (length(nz)) min(nz) else Inf
+                }, 1),
+    stringsAsFactors = FALSE)
+  ord <- switch(by,
+    name      = .deme_order(tab$deme),
+    n_nonzero = tab$deme[order(-tab$n_nonzero, tab$deme)],
+    first     = tab$deme[order(tab$first, tab$deme)])
+  lab <- sprintf("%s  (%d/%d non-zero)", tab$deme, tab$n_nonzero,
+                 tab$n_surveys)
+  list(order = ord, labels = stats::setNames(lab, tab$deme))
+}
+
+
+#' Observed frequencies, with no model fitted
+#'
+#' The survey panel as it stands, before any inference: one point per
+#' survey at its observed frequency `x / n`, with the binomial interval
+#' already stored on the object. Nothing here is a model output, so this is
+#' the plot to look at while deciding whether a fit is worth running, and
+#' the one to show beside [gc_plot_frequency] to separate what was measured
+#' from what was inferred.
+#'
+#' The intervals are the same `lo`/`hi` columns that [gc_plot_frequency]
+#' draws on its data points, so the two figures agree on the data even
+#' though only one of them carries a model.
+#'
+#' A deme with no non-zero survey is still given a panel. That absence is
+#' information -- it is what [gc_plot_present] later puts a probability on
+#' -- and dropping those panels would hide it.
+#'
+#' @param x A [GCData], or a [GCFit], in which case its `$data` is used.
+#' @param demes Demes to show; `NULL` for all.
+#' @param order Facet order: `"name"` (the default, alphabetical, or numeric
+#'   where the names are numbers) so a deme keeps the same panel position
+#'   as in every other figure; `"n_nonzero"` to bring the sites carrying
+#'   most signal first; `"first"` to order by earliest non-zero survey.
+#'   The `"p_present"` and `"p_alive"` orders of the fitted plots need
+#'   posterior quantities and are not available here.
+#' @param ncol Facet columns.
+#' @param lines Join successive surveys within a deme. Off by default: the
+#'   line is interpolation, not an estimate, and reads as one.
+#' @return A ggplot.
+#' @examples
+#' \donttest{
+#' d <- gc_example_data(M = 16)
+#' gc_plot_data(d)
+#' gc_plot_data(d, order = "first")
+#' }
+#' @export
+gc_plot_data <- function(x, demes = NULL, order = "name", ncol = 4L,
+                         lines = FALSE) {
+  .need_ggplot()
+  d <- if (inherits(x, "GCFit")) x$data else x
+  if (!inherits(d, "GCData"))
+    stop("`x` must be a GCData or a GCFit.", call. = FALSE)
+
+  all_demes <- d$demes
+  keep <- if (is.null(demes)) all_demes else {
+    bad <- setdiff(demes, all_demes)
+    if (length(bad))
+      stop("no such deme(s): ", paste(bad, collapse = ", "), call. = FALSE)
+    demes
+  }
+
+  sv <- d$surveys[d$surveys$deme %in% keep, ]
+  p <- .data_panels(sv, by = order)
+  sv$deme <- factor(sv$deme, levels = intersect(p$order, keep))
+
+  g <- ggplot2::ggplot(sv, ggplot2::aes(.data$time, .data$f))
+  if (isTRUE(lines))
+    g <- g + ggplot2::geom_line(colour = .COL[["muted"]], linewidth = .3)
+  g +
+    ggplot2::geom_pointrange(
+      ggplot2::aes(ymin = .data$lo, ymax = .data$hi),
+      size = .18, linewidth = .35, colour = .COL[["ink"]]) +
+    ggplot2::facet_wrap(~deme, ncol = ncol,
+                        labeller = ggplot2::labeller(deme = p$labels)) +
+    ggplot2::coord_cartesian(ylim = c(0, 1)) +
+    .gc_theme() +
+    ggplot2::labs(x = "year", y = "frequency",
+      title = "Observed frequencies",
+      subtitle = "surveys with 95% binomial intervals; no model fitted")
+}
+
+
+#' @description `plot()` on a [GCData] draws the observed frequencies.
+#' @param x A [GCData].
+#' @param ... Passed to [gc_plot_data].
+#' @return A ggplot.
+#' @rdname gc_plot_data
+#' @export
+plot.GCData <- function(x, ...) gc_plot_data(x, ...)

@@ -21,9 +21,9 @@ gc_tstar_negbin_logw(T, tmin, mu, r)
 }
 \description{
 \verb{t* = tmin + NegBin(mu, r)} in steps, with \code{mu} the mean of the offset
-and \code{r} its size, so \code{Var = mu + mu^2/r}. \code{r = 1} is the geometric, and
-as \code{r} grows the law tends to Poisson. Because the backward pass never
-sees the prior, these weights are all that distinguishes one law on \verb{t*}
-from another.
+and \code{r} its size, so \code{Var = mu + mu^2/r}. Setting \code{r} to 1 recovers the
+geometric, and as \code{r} grows the law tends to Poisson. Because the
+backward pass never sees the prior, these weights are all that
+distinguishes one law on \verb{t*} from another.
 }
 \keyword{internal}

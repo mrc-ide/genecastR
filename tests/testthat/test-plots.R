@@ -168,3 +168,33 @@ test_that("trace plots carry the diagnostics in the panel labels", {
   expect_true(all(grepl("Rhat", lab$variable)))
   expect_true(all(grepl("ESS", lab$variable)))
 })
+
+test_that("gc_plot_data works without a fit", {
+  skip_if_no_ggplot()
+  d <- suppressMessages(gc_example_data(M = 16))
+
+  expect_s3_class(gc_plot_data(d), "ggplot")
+  expect_s3_class(plot(d), "ggplot")
+  for (o in c("name", "n_nonzero", "first"))
+    expect_s3_class(gc_plot_data(d, order = o), "ggplot")
+  expect_s3_class(gc_plot_data(d, lines = TRUE), "ggplot")
+
+  ## A GCFit stands in for its data.
+  expect_s3_class(gc_plot_data(pj()$fit), "ggplot")
+
+  ## Subsetting keeps exactly the demes asked for, in panel order.
+  g <- gc_plot_data(d, demes = c("Kanungu", "Jinja"))
+  expect_setequal(levels(g$data$deme), c("Jinja", "Kanungu"))
+  expect_identical(levels(g$data$deme), c("Jinja", "Kanungu"))
+
+  ## Demes with no non-zero survey keep a panel: the absence is the point.
+  expect_true(all(d$demes %in% levels(gc_plot_data(d)$data$deme)))
+
+  expect_error(gc_plot_data(d, demes = "Nowhere"), "no such deme")
+  expect_error(gc_plot_data(42), "GCData or a GCFit")
+
+  ## The orderings differ from alphabetical on this panel, or they are not
+  ## doing anything.
+  expect_false(identical(levels(gc_plot_data(d, order = "name")$data$deme),
+                         levels(gc_plot_data(d, order = "first")$data$deme)))
+})

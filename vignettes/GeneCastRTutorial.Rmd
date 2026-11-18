@@ -210,6 +210,12 @@ the first survey. Where the window *opens* is a prior claim about the earliest
 possible arrival rather than anything the data say, so it is made at fit time
 instead -- see `lead_in` below.
 
+One can visualise the data by calling:
+
+```{r, fig.height = 5}
+gc_plot_data(d)
+```
+
 ## Fitting
 
 Parameter posteriors can be drawn using a Metropolis-within-Gibbs scheme in which the true likelihood is evaluated exactly. An example fit output looks like this.

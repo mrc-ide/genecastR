@@ -325,3 +325,44 @@ test_that("mu_u shares the prior the shared advantage gets", {
   ud <- m[, paste0("u[", d$demes, "]")]
   expect_equal(as.numeric(rowMeans(ud)), as.numeric(m[, "u"]))
 })
+
+## --- progress reporting ----------------------------------------------------
+
+## capture.output() would also catch the returned object being auto-printed,
+## so the fit is always assigned inside the call.
+grab <- function(...) capture.output(f <- GCFit$new(...), type = "output")
+
+test_that("progress prints per chain and quiet overrides it", {
+  d <- small()
+  ## refresh is in sweeps, so this asks for exactly two lines
+  out <- grab(d, chains = 1L, iter = 40L, warmup = 10L, progress = 20L)
+  expect_length(out, 2L)
+  expect_match(out[1L], "^chain 1: +20 / 40 \\( 50%\\) sampling$")
+  expect_match(out[2L], "100%")
+  ## warm-up is labelled as such
+  expect_match(grab(d, chains = 1L, iter = 40L, warmup = 30L,
+                    progress = 20L)[1L], "warm-up")
+  ## quiet wins, and FALSE is silent
+  expect_length(grab(d, chains = 1L, iter = 40L, warmup = 10L,
+                     progress = 20L, quiet = TRUE), 0L)
+  expect_length(grab(d, chains = 1L, iter = 40L, warmup = 10L,
+                     progress = FALSE, quiet = TRUE), 0L)
+})
+
+test_that("progress does not disturb the draws, and bad values are refused", {
+  d <- small()
+  a <- GCFit$new(d, chains = 2L, iter = 60L, warmup = 20L, seed = 7L,
+                 progress = FALSE, quiet = TRUE)
+  out <- capture.output(
+    b <- GCFit$new(d, chains = 2L, iter = 60L, warmup = 20L, seed = 7L,
+                   progress = 10L, quiet = TRUE), type = "output")
+  ## quiet suppresses the lines even when a refresh is asked for
+  expect_length(out, 0L)
+  ## and reporting is side-effect free: the same seed gives the same chains
+  expect_equal(as.numeric(posterior::as_draws_matrix(a$draws)),
+               as.numeric(posterior::as_draws_matrix(b$draws)))
+  expect_error(GCFit$new(d, chains = 1L, iter = 40L, progress = "yes",
+                         quiet = TRUE), "must be TRUE, FALSE")
+  expect_error(GCFit$new(d, chains = 1L, iter = 40L, progress = 0,
+                         quiet = TRUE), "must be TRUE, FALSE")
+})

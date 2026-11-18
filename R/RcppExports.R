@@ -62,10 +62,10 @@ gc_loglik_pt <- function(Nlat, alpha, lambda, T, demes, founding = 0L, tstar_p =
 #' Log-weights for a shifted negative binomial introduction time
 #'
 #' `t* = tmin + NegBin(mu, r)` in steps, with `mu` the mean of the offset
-#' and `r` its size, so `Var = mu + mu^2/r`. `r = 1` is the geometric, and
-#' as `r` grows the law tends to Poisson. Because the backward pass never
-#' sees the prior, these weights are all that distinguishes one law on `t*`
-#' from another.
+#' and `r` its size, so `Var = mu + mu^2/r`. Setting `r` to 1 recovers the
+#' geometric, and as `r` grows the law tends to Poisson. Because the
+#' backward pass never sees the prior, these weights are all that
+#' distinguishes one law on `t*` from another.
 #'
 #' @param T Number of lattice steps.
 #' @param tmin Earliest step the arrival may fall on, at least 1.
